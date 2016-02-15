@@ -1,6 +1,5 @@
 package ru.minlexx.xnovaalarm;
 
-
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -19,7 +18,7 @@ public class RetrieveTask extends AsyncTask<String, Void, String> {
     private static final String TAG = RetrieveTask.class.getName();
     private static final String XN_HOST = "uni4.xnova.su";
 
-    private Exception exception;
+    private Exception exception = null;
 
     protected String test_download(String url) {
         try {
@@ -60,7 +59,7 @@ public class RetrieveTask extends AsyncTask<String, Void, String> {
             Log.i(TAG, doc.title());
             return doc.html();
         } catch (IOException ioe) {
-            Log.e(TAG, "test_jsoup failed", ioe);
+            this.exception = ioe;
         }
         return null;
     }
@@ -75,8 +74,12 @@ public class RetrieveTask extends AsyncTask<String, Void, String> {
 
     @Override
     protected void onPostExecute(String result) {
-        // TODO: check this.exception
-        // TODO: do something with the result
+        // check this.exception
+        if (this.exception != null) {
+            Log.e(TAG, "RetrieveTask failed:", this.exception);
+            return;
+        }
+        // do something with the result
         Log.i(TAG, result);
     }
 }
