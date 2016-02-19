@@ -3,7 +3,10 @@
     <string name="start_service">Start service</string>
     <string name="stop_service">Stop service</string>
     <string name="xnova_login">XNova Login:</string>
+    <string name="xnova_password">XNova pass:</string>
     <string name="login">login</string>
+    <string name="password">password</string>
     <string name="local_service_started">XNova Alarm started</string>
     <string name="local_service_label">XNova Alarm Service</string>
+    <string name="remember_account">Remember account</string>
 </resources>
