@@ -10,12 +10,17 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+
 public class RefresherService extends Service {
 
     private static final String TAG = RefresherService.class.getName();
     private final int NOTIFICATION_ID = R.string.local_service_started;
     private NotificationManager mNM = null;
     private final LocalBinder mBinder = new LocalBinder();
+    private boolean m_is_started = false;
+
+    public static final String EXTRA_XNOVA_LOGIN = "ru.minlexx.xnovaalarm.intent.XNOVA_LOGIN";
+    public static final String EXTRA_XNOVA_PASS = "ru.minlexx.xnovaalarm.intent.XNOVA_PASS";
 
     /**
      * Class for clients to access.  Because we know this service always
@@ -35,13 +40,13 @@ public class RefresherService extends Service {
     public void onCreate() {
         Log.d(TAG, "onCreate()");
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        showNotification();
     }
 
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy()");
-        mNM.cancel(NOTIFICATION_ID);
+        hideNotification();
+        m_is_started = false;
     }
 
     @Override
@@ -52,8 +57,13 @@ public class RefresherService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Received start id " + startId + ": " + intent);
+        m_is_started = true;
+        showNotification();
         return START_NOT_STICKY;
     }
+
+
+    public boolean isStarted() { return m_is_started; }
 
 
     /**
@@ -65,6 +75,7 @@ public class RefresherService extends Service {
 
         Intent activityIntent = new Intent(this, MainActivity.class);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 
         // The PendingIntent to launch our activity if the user selects this notification
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, activityIntent, 0);
@@ -82,5 +93,11 @@ public class RefresherService extends Service {
 
         // Send the notification.
         mNM.notify(NOTIFICATION_ID, notification);
+    }
+
+    private void hideNotification() {
+        if (mNM != null) {
+            mNM.cancel(NOTIFICATION_ID);
+        }
     }
 }
