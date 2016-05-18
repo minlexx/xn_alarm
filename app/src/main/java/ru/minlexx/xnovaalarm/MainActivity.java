@@ -75,13 +75,18 @@ public class MainActivity extends Activity {
     }
 
     public void onClickStartService(View view) {
-        //Log.d(TAG, "onClickStartService()");
-        Intent ssi = new Intent(this, RefresherService.class);
-        ssi.putExtra(RefresherService.EXTRA_XNOVA_LOGIN, "");
-        ssi.putExtra(RefresherService.EXTRA_XNOVA_PASS, "");
-        startService(ssi);
+        Log.d(TAG, "onClickStartService()");
 
-        //new RetrieveTask().execute("");
+        // get user auth data
+        final EditText e_login = (EditText)findViewById(R.id.et_xnovalogin);
+        final EditText e_pass = (EditText)findViewById(R.id.et_xnovapassword);
+        final String s_login = e_login.getText().toString();
+        final String s_pass = e_pass.getText().toString();
+
+        Intent ssi = new Intent(this, RefresherService.class);
+        ssi.putExtra(RefresherService.EXTRA_XNOVA_LOGIN, s_login);
+        ssi.putExtra(RefresherService.EXTRA_XNOVA_PASS, s_pass);
+        startService(ssi);
     }
 
     public void onClickStopService(View view) {
