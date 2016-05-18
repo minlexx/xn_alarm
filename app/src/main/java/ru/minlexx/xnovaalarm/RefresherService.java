@@ -22,6 +22,9 @@ public class RefresherService extends Service {
     public static final String EXTRA_XNOVA_LOGIN = "ru.minlexx.xnovaalarm.intent.XNOVA_LOGIN";
     public static final String EXTRA_XNOVA_PASS = "ru.minlexx.xnovaalarm.intent.XNOVA_PASS";
 
+    private String m_xnova_login = "";
+    private String m_xnova_pass = "";
+
     /**
      * Class for clients to access.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with
@@ -56,8 +59,14 @@ public class RefresherService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(TAG, "Received start id " + startId + ": " + intent);
+        Log.i(TAG, "onStartCommand(): Received start id " + startId + ": " + intent);
+        //
         m_is_started = true;
+        m_xnova_login = intent.getStringExtra(EXTRA_XNOVA_LOGIN);
+        m_xnova_pass = intent.getStringExtra(EXTRA_XNOVA_PASS);
+        //
+        Log.i(TAG, String.format("onStartCommand(): auth: [%s] [%s]", m_xnova_login, m_xnova_pass));
+        //
         showNotification();
         return START_NOT_STICKY;
     }
