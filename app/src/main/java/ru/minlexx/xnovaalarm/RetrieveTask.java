@@ -18,7 +18,7 @@ public class RetrieveTask extends AsyncTask<String, Void, String> {
     private static final String TAG = RetrieveTask.class.getName();
     private static final String XN_HOST = "uni4.xnova.su";
 
-    private Exception exception = null;
+    private Exception m_exception = null;
 
     protected String test_download(String url) {
         try {
@@ -41,7 +41,7 @@ public class RetrieveTask extends AsyncTask<String, Void, String> {
             //
             return response.toString();
         } catch (Exception e) {
-            this.exception = e;
+            this.m_exception = e;
             return null;
         }
     }
@@ -50,7 +50,7 @@ public class RetrieveTask extends AsyncTask<String, Void, String> {
     protected String test_jsoup(String url) {
         try {
             String full_url = "http://" + XN_HOST + "/" + url;
-            Log.d(TAG, "Downloading: " + full_url);
+            Log.d(TAG, "JSOUP Downloading: " + full_url);
             Document doc = Jsoup.connect(full_url)
                     .userAgent("XNovaAlarm")
                     .timeout(10000)
@@ -59,7 +59,7 @@ public class RetrieveTask extends AsyncTask<String, Void, String> {
             Log.i(TAG, doc.title());
             return doc.html();
         } catch (IOException ioe) {
-            this.exception = ioe;
+            this.m_exception = ioe;
         }
         return null;
     }
@@ -68,15 +68,15 @@ public class RetrieveTask extends AsyncTask<String, Void, String> {
     @Override
     protected String doInBackground(String... urls) {
         String url = urls[0];
-        //return test_download(url);
+        // return test_download(url);
         return test_jsoup(url);
     }
 
     @Override
     protected void onPostExecute(String result) {
         // check this.exception
-        if (this.exception != null) {
-            Log.e(TAG, "RetrieveTask failed:", this.exception);
+        if (this.m_exception != null) {
+            Log.e(TAG, "RetrieveTask failed:", this.m_exception);
             return;
         }
         // do something with the result

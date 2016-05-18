@@ -68,6 +68,9 @@ public class RefresherService extends Service {
         Log.i(TAG, String.format("onStartCommand(): auth: [%s] [%s]", m_xnova_login, m_xnova_pass));
         //
         showNotification();
+        //
+        new RetrieveTask().execute("");
+
         return START_NOT_STICKY;
     }
 
