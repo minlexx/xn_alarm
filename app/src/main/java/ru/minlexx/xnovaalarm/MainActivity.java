@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -17,6 +18,11 @@ import android.widget.EditText;
 public class MainActivity extends Activity {
 
     private static final String TAG = MainActivity.class.getName();
+    private static final String PREFS_AUTH_FILENAME = "auth";
+    private static final String PREFS_LOGIN = "xn_login";
+    private static final String PREFS_PASS = "xn_pass";
+    private static final String PREFS_REMEMBER = "xn_remember";
+
     private RefresherService m_service = null;
     private boolean m_bound = false;
 
@@ -57,6 +63,26 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        // restore saved data
+        SharedPreferences prefs = getSharedPreferences(PREFS_AUTH_FILENAME, Context.MODE_PRIVATE);
+        String saved_login = prefs.getString(PREFS_LOGIN, "");
+        String saved_pass = prefs.getString(PREFS_PASS, "");
+        boolean saved_remember = prefs.getBoolean(PREFS_REMEMBER, false);
+        // get controls
+        final CheckBox cb = (CheckBox)findViewById(R.id.cb_remember);
+        final EditText e_login = (EditText)findViewById(R.id.et_xnovalogin);
+        final EditText e_pass = (EditText)findViewById(R.id.et_xnovapassword);
+        // restore?
+        if (saved_remember) {
+            cb.setChecked(true);
+            e_login.setText(saved_login);
+            e_pass.setText(saved_pass);
+            Log.d(TAG, "onStart(): loaded savedata");
+        } else {
+            cb.setChecked(false);
+            e_login.setText("");
+            e_pass.setText("");
+        }
         // Bind to local service
         Intent intent = new Intent(this, RefresherService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
@@ -72,6 +98,25 @@ public class MainActivity extends Activity {
             m_service = null;
             Log.d(TAG, "onStop(): unbound from service.");
         }
+        // save savedata?
+        // get controls
+        final CheckBox cb = (CheckBox)findViewById(R.id.cb_remember);
+        final EditText e_login = (EditText)findViewById(R.id.et_xnovalogin);
+        final EditText e_pass = (EditText)findViewById(R.id.et_xnovapassword);
+        //
+        SharedPreferences prefs = getSharedPreferences(PREFS_AUTH_FILENAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor prefs_editor = prefs.edit();
+        if (cb.isChecked()) {
+            prefs_editor.putBoolean(PREFS_REMEMBER, true);
+            prefs_editor.putString(PREFS_LOGIN, e_login.getText().toString());
+            prefs_editor.putString(PREFS_PASS, e_pass.getText().toString());
+            Log.d(TAG, "onStop(): saved savedata");
+        } else {
+            prefs_editor.putBoolean(PREFS_REMEMBER, false);
+            prefs_editor.putString(PREFS_LOGIN, "");
+            prefs_editor.putString(PREFS_PASS, "");
+        }
+        prefs_editor.apply();
     }
 
     public void onClickStartService(View view) {
