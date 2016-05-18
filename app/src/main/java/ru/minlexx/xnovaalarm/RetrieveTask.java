@@ -1,9 +1,12 @@
 package ru.minlexx.xnovaalarm;
 
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -80,6 +83,25 @@ public class RetrieveTask extends AsyncTask<String, Void, String> {
             return;
         }
         // do something with the result
-        Log.i(TAG, result);
+        // Log.i(TAG, result); // log to logger
+        Log.i(TAG, String.format("Downloaded %d bytes", result.length()));
+        // try to save to a file
+        String extState = Environment.getExternalStorageState();
+        // check if it is writable
+        if (extState.equals(Environment.MEDIA_MOUNTED)) {
+            File extDir = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS);
+            Log.d(TAG, extDir.getAbsolutePath());
+
+            try {
+                File outFile = new File(extDir, "xnova.html");
+                FileWriter fw = new FileWriter(outFile);
+                fw.write(result);
+                fw.close();
+                Log.d(TAG, String.format("Saved result to [%s]", outFile.getAbsolutePath()));
+            } catch (IOException ioe) {
+                Log.e(TAG, "Failed to save download result!", ioe);
+            }
+        }
     }
 }
