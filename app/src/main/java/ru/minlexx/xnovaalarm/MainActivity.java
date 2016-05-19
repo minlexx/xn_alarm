@@ -123,12 +123,33 @@ public class MainActivity extends Activity {
         ssi.putExtra(RefresherService.EXTRA_XNOVA_LOGIN, s_login);
         ssi.putExtra(RefresherService.EXTRA_XNOVA_PASS, s_pass);
         startService(ssi);
+        //
+        updateButtonsEnabledStates(); // this does not work
     }
 
     public void onClickStopService(View view) {
         Log.d(TAG, "onClickStopService()");
         Intent ssi = new Intent(this, RefresherService.class);
         stopService(ssi);
+        //
+        updateButtonsEnabledStates(); // this does not work
+    }
+
+    private void updateButtonsEnabledStates() {
+        if (m_service == null) return;
+        boolean is_st = m_service.isStarted();
+        //
+        Log.d(TAG, String.format("updateButtonsEnabledStates(): service is started: %b", is_st));
+        //
+        View vbtn_starts = findViewById(R.id.button_starts);
+        View vbtn_stops = findViewById(R.id.button_stops);
+        if (is_st) {
+            vbtn_starts.setEnabled(false);
+            vbtn_stops.setEnabled(true);
+        } else {
+            vbtn_starts.setEnabled(true);
+            vbtn_stops.setEnabled(false);
+        }
     }
 
     /** Defines callbacks for service binding, passed to bindService() */
@@ -142,18 +163,8 @@ public class MainActivity extends Activity {
             m_service = binder.getService();
             m_bound = true;
             Log.d(TAG, "onServiceConnected(): successfully bound to service");
-            boolean srv_is_started = m_service.isStarted();
-            Log.d(TAG, String.format("m_service.isStarted() = %b", srv_is_started));
-
-            View vbtn_starts = findViewById(R.id.button_starts);
-            View vbtn_stops = findViewById(R.id.button_stops);
-            if (srv_is_started) {
-                vbtn_starts.setEnabled(false);
-                vbtn_stops.setEnabled(true);
-            } else {
-                vbtn_starts.setEnabled(true);
-                vbtn_stops.setEnabled(false);
-            }
+            //
+            updateButtonsEnabledStates();
         }
 
         @Override
