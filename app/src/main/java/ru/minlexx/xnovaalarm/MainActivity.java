@@ -26,10 +26,20 @@ public class MainActivity extends Activity {
     private RefresherService m_service = null;
     private boolean m_bound = false;
 
+    // GUI controls
+    private CheckBox cb_remember = null;
+    private EditText et_login = null;
+    private EditText et_pass = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //
+        // get GUI controls
+        cb_remember = (CheckBox)findViewById(R.id.cb_remember);
+        et_login = (EditText)findViewById(R.id.et_xnovalogin);
+        et_pass = (EditText)findViewById(R.id.et_xnovapassword);
     }
 
     @Override
@@ -37,13 +47,9 @@ public class MainActivity extends Activity {
         super.onSaveInstanceState(outState);
         Log.d(TAG, "onSaveInstanceState()");
         //
-        final CheckBox cb = (CheckBox)findViewById(R.id.cb_remember);
-        final EditText e_login = (EditText)findViewById(R.id.et_xnovalogin);
-        final EditText e_pass = (EditText)findViewById(R.id.et_xnovapassword);
-        //
-        outState.putBoolean("cb_remember", cb.isChecked());
-        outState.putString("login", e_login.getText().toString());
-        outState.putString("pass", e_pass.getText().toString());
+        outState.putBoolean("cb_remember", cb_remember.isChecked());
+        outState.putString("login", et_login.getText().toString());
+        outState.putString("pass", et_pass.getText().toString());
     }
 
     @Override
@@ -51,13 +57,9 @@ public class MainActivity extends Activity {
         super.onRestoreInstanceState(savedInstanceState);
         Log.d(TAG, "onRestoreInstanceState()");
         //
-        final CheckBox cb = (CheckBox)findViewById(R.id.cb_remember);
-        final EditText e_login = (EditText)findViewById(R.id.et_xnovalogin);
-        final EditText e_pass = (EditText)findViewById(R.id.et_xnovapassword);
-        //
-        cb.setChecked(savedInstanceState.getBoolean("cb_remember"));
-        e_login.setText(savedInstanceState.getString("login"));
-        e_pass.setText(savedInstanceState.getString("pass"));
+        cb_remember.setChecked(savedInstanceState.getBoolean("cb_remember"));
+        et_login.setText(savedInstanceState.getString("login"));
+        et_pass.setText(savedInstanceState.getString("pass"));
     }
 
     @Override
@@ -68,20 +70,16 @@ public class MainActivity extends Activity {
         String saved_login = prefs.getString(PREFS_LOGIN, "");
         String saved_pass = prefs.getString(PREFS_PASS, "");
         boolean saved_remember = prefs.getBoolean(PREFS_REMEMBER, false);
-        // get controls
-        final CheckBox cb = (CheckBox)findViewById(R.id.cb_remember);
-        final EditText e_login = (EditText)findViewById(R.id.et_xnovalogin);
-        final EditText e_pass = (EditText)findViewById(R.id.et_xnovapassword);
         // restore?
         if (saved_remember) {
-            cb.setChecked(true);
-            e_login.setText(saved_login);
-            e_pass.setText(saved_pass);
+            cb_remember.setChecked(true);
+            et_login.setText(saved_login);
+            et_pass.setText(saved_pass);
             Log.d(TAG, "onStart(): loaded savedata");
         } else {
-            cb.setChecked(false);
-            e_login.setText("");
-            e_pass.setText("");
+            cb_remember.setChecked(false);
+            et_login.setText("");
+            et_pass.setText("");
         }
         // Bind to local service
         Intent intent = new Intent(this, RefresherService.class);
@@ -99,17 +97,12 @@ public class MainActivity extends Activity {
             Log.d(TAG, "onStop(): unbound from service.");
         }
         // save savedata?
-        // get controls
-        final CheckBox cb = (CheckBox)findViewById(R.id.cb_remember);
-        final EditText e_login = (EditText)findViewById(R.id.et_xnovalogin);
-        final EditText e_pass = (EditText)findViewById(R.id.et_xnovapassword);
-        //
         SharedPreferences prefs = getSharedPreferences(PREFS_AUTH_FILENAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor prefs_editor = prefs.edit();
-        if (cb.isChecked()) {
+        if (cb_remember.isChecked()) {
             prefs_editor.putBoolean(PREFS_REMEMBER, true);
-            prefs_editor.putString(PREFS_LOGIN, e_login.getText().toString());
-            prefs_editor.putString(PREFS_PASS, e_pass.getText().toString());
+            prefs_editor.putString(PREFS_LOGIN, et_login.getText().toString());
+            prefs_editor.putString(PREFS_PASS, et_pass.getText().toString());
             Log.d(TAG, "onStop(): saved savedata");
         } else {
             prefs_editor.putBoolean(PREFS_REMEMBER, false);
@@ -123,10 +116,8 @@ public class MainActivity extends Activity {
         Log.d(TAG, "onClickStartService()");
 
         // get user auth data
-        final EditText e_login = (EditText)findViewById(R.id.et_xnovalogin);
-        final EditText e_pass = (EditText)findViewById(R.id.et_xnovapassword);
-        final String s_login = e_login.getText().toString();
-        final String s_pass = e_pass.getText().toString();
+        final String s_login = et_login.getText().toString();
+        final String s_pass = et_pass.getText().toString();
 
         Intent ssi = new Intent(this, RefresherService.class);
         ssi.putExtra(RefresherService.EXTRA_XNOVA_LOGIN, s_login);
