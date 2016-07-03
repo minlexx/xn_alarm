@@ -112,6 +112,10 @@ public class MainActivity extends Activity {
         prefs_editor.apply();
     }
 
+    public void onClickBeginLogin(View view) {
+        Log.d(TAG, "onClickBeginLogin()");
+    }
+
     public void onClickStartService(View view) {
         Log.d(TAG, "onClickStartService()");
 

@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name" translatable="false">XNAlarm</string>
+    <string name="login_to_xnova">Login to XNova</string>
     <string name="start_service">Start service</string>
     <string name="stop_service">Stop service</string>
     <string name="xnova_login">XNova Login:</string>

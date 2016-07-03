@@ -10,7 +10,8 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:layout_alignParentBottom="true"
     android:layout_alignParentLeft="true"
-    tools:context="ru.minlexx.xnovaalarm.MainActivity">
+    tools:context="ru.minlexx.xnovaalarm.MainActivity"
+    android:gravity="center_horizontal">
 
     <LinearLayout
         android:orientation="horizontal"
@@ -66,6 +67,20 @@
             android:layout_height="wrap_content"
             android:text="@string/remember_account"
             android:id="@+id/cb_remember" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/login_to_xnova"
+            android:id="@+id/button_login"
+            android:onClick="onClickBeginLogin" />
     </LinearLayout>
 
     <LinearLayout
