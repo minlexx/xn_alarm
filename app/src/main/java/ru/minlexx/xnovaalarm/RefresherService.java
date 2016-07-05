@@ -10,6 +10,8 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import ru.minlexx.xnovaalarm.ru.minlexx.xnovaalarm.ifaces.IMainActivity;
+
 
 public class RefresherService extends Service {
 
@@ -25,6 +27,8 @@ public class RefresherService extends Service {
     private String m_xnova_login = "";
     private String m_xnova_pass = "";
 
+    private IMainActivity m_mainActivity = null;
+
     /**
      * Class for clients to access.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with
@@ -39,6 +43,14 @@ public class RefresherService extends Service {
     public RefresherService() {
     }
 
+    public void set_mainActivity(IMainActivity mainActivity) {
+        this.m_mainActivity = mainActivity;
+        if (mainActivity != null)
+            Log.d(TAG, "IMainActivity pointer was set on the service!");
+        else
+            Log.d(TAG, "IMainActivity pointer was unset from the service.");
+    }
+
     @Override
     public void onCreate() {
         Log.d(TAG, "onCreate()");
@@ -50,6 +62,7 @@ public class RefresherService extends Service {
         Log.d(TAG, "onDestroy()");
         hideNotification();
         m_is_started = false;
+        m_mainActivity = null;
     }
 
     @Override
@@ -68,6 +81,8 @@ public class RefresherService extends Service {
         Log.i(TAG, String.format("onStartCommand(): auth: [%s] [%s]", m_xnova_login, m_xnova_pass));
         //
         showNotification();
+        if (this.m_mainActivity != null)
+            this.m_mainActivity.notifyServiceStateChange();
         //
         new RetrieveTask().execute("");
 

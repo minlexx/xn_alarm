@@ -10,12 +10,16 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
+import ru.minlexx.xnovaalarm.ru.minlexx.xnovaalarm.ifaces.IMainActivity;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity
+    implements IMainActivity
+{
 
     private static final String TAG = MainActivity.class.getName();
     private static final String PREFS_AUTH_FILENAME = "auth";
@@ -30,6 +34,9 @@ public class MainActivity extends Activity {
     private CheckBox cb_remember = null;
     private EditText et_login = null;
     private EditText et_pass = null;
+    private Button btn_starts = null;
+    private Button btn_stops = null;
+    private Button btn_login = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +47,9 @@ public class MainActivity extends Activity {
         cb_remember = (CheckBox)findViewById(R.id.cb_remember);
         et_login = (EditText)findViewById(R.id.et_xnovalogin);
         et_pass = (EditText)findViewById(R.id.et_xnovapassword);
+        btn_starts = (Button)findViewById(R.id.button_starts);
+        btn_stops = (Button)findViewById(R.id.button_stops);
+        btn_login = (Button)findViewById(R.id.button_login);
     }
 
     @Override
@@ -89,13 +99,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        // Unbind from the service
-        if (m_bound) {
-            unbindService(mConnection);
-            m_bound = false;
-            m_service = null;
-            Log.d(TAG, "onStop(): unbound from service.");
-        }
+        this.doUnbindFromService();
         // save savedata?
         SharedPreferences prefs = getSharedPreferences(PREFS_AUTH_FILENAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor prefs_editor = prefs.edit();
@@ -110,6 +114,21 @@ public class MainActivity extends Activity {
             prefs_editor.putString(PREFS_PASS, "");
         }
         prefs_editor.apply();
+    }
+
+    protected void doUnbindFromService() {
+        // Unbind from the service
+        if (m_bound) {
+            // we cannot longer receive notifications from service
+            //if (m_service != null)
+            //    m_service.set_mainActivity(null);
+            // and do this before unbinding
+            unbindService(mConnection);
+            m_bound = false;
+            m_service = null;
+            Log.d(TAG, "unbound from service.");
+            this.updateButtonsEnabledStates();
+        }
     }
 
     public void onClickBeginLogin(View view) {
@@ -127,32 +146,34 @@ public class MainActivity extends Activity {
         ssi.putExtra(RefresherService.EXTRA_XNOVA_LOGIN, s_login);
         ssi.putExtra(RefresherService.EXTRA_XNOVA_PASS, s_pass);
         startService(ssi);
-        //
-        updateButtonsEnabledStates(); // this does not work
     }
 
     public void onClickStopService(View view) {
         Log.d(TAG, "onClickStopService()");
         Intent ssi = new Intent(this, RefresherService.class);
         stopService(ssi);
-        //
-        updateButtonsEnabledStates(); // this does not work
+        // also unbind from it... we do not need it running
+        this.doUnbindFromService();
     }
 
     private void updateButtonsEnabledStates() {
-        if (m_service == null) return;
+        if (m_service == null) {
+            // well, service is most probably not running and we are not bound to it
+            // mark buttons as ready to start it
+            btn_starts.setEnabled(true);
+            btn_stops.setEnabled(false);
+            return;
+        }
         boolean is_st = m_service.isStarted();
         //
         Log.d(TAG, String.format("updateButtonsEnabledStates(): service is started: %b", is_st));
         //
-        View vbtn_starts = findViewById(R.id.button_starts);
-        View vbtn_stops = findViewById(R.id.button_stops);
         if (is_st) {
-            vbtn_starts.setEnabled(false);
-            vbtn_stops.setEnabled(true);
+            btn_starts.setEnabled(false);
+            btn_stops.setEnabled(true);
         } else {
-            vbtn_starts.setEnabled(true);
-            vbtn_stops.setEnabled(false);
+            btn_starts.setEnabled(true);
+            btn_stops.setEnabled(false);
         }
     }
 
@@ -166,15 +187,23 @@ public class MainActivity extends Activity {
             RefresherService.LocalBinder binder = (RefresherService.LocalBinder)service;
             m_service = binder.getService();
             m_bound = true;
-            Log.d(TAG, "onServiceConnected(): successfully bound to service");
+            m_service.set_mainActivity(MainActivity.this);
+            Log.d(TAG, "ServiceConnection.onServiceConnected(): successfully bound to service");
             //
             updateButtonsEnabledStates();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
+            Log.d(TAG, "ServiceConnection.onServiceDisconnected(): mark as not bound to service");
             m_bound = false;
             m_service = null;
         }
     };
+
+    @Override
+    public void notifyServiceStateChange() {
+        Log.i(TAG, "notifyServiceStateChange(): will update buttons");
+        this.updateButtonsEnabledStates();
+    }
 }
