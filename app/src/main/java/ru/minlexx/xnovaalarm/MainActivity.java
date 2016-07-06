@@ -14,6 +14,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
+import java.net.HttpCookie;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.List;
+
 import ru.minlexx.xnovaalarm.ru.minlexx.xnovaalarm.ifaces.IMainActivity;
 
 
@@ -133,6 +138,12 @@ public class MainActivity extends Activity
 
     public void onClickBeginLogin(View view) {
         Log.d(TAG, "onClickBeginLogin()");
+        AuthTask at = new AuthTask(this);
+        try {
+            at.execute(new URL("http", "uni5.xnova.su", 80, "/"));
+        } catch (MalformedURLException mue) {
+            mue.printStackTrace();
+        }
     }
 
     public void onClickStartService(View view) {
@@ -205,5 +216,15 @@ public class MainActivity extends Activity
     public void notifyServiceStateChange() {
         Log.i(TAG, "notifyServiceStateChange(): will update buttons");
         this.updateButtonsEnabledStates();
+    }
+
+    @Override
+    public void onXNovaLoginOK(List<HttpCookie> cookies) {
+        //
+    }
+
+    @Override
+    public void onXNovaLoginFail() {
+        //
     }
 }
