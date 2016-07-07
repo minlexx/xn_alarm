@@ -4,12 +4,11 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import java.net.HttpCookie;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import ru.minlexx.xnovaalarm.ru.minlexx.xnovaalarm.ifaces.IMainActivity;
+import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
 
 
 public class AuthTask extends AsyncTask<URL, Void, List<HttpCookie>> {

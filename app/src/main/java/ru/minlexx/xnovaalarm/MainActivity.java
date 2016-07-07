@@ -19,7 +19,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-import ru.minlexx.xnovaalarm.ru.minlexx.xnovaalarm.ifaces.IMainActivity;
+import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
 
 
 public class MainActivity extends Activity

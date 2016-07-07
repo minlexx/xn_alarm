@@ -10,7 +10,7 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import ru.minlexx.xnovaalarm.ru.minlexx.xnovaalarm.ifaces.IMainActivity;
+import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
 
 
 public class RefresherService extends Service {

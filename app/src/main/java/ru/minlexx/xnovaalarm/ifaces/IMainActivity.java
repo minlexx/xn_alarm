@@ -1,4 +1,4 @@
-package ru.minlexx.xnovaalarm.ru.minlexx.xnovaalarm.ifaces;
+package ru.minlexx.xnovaalarm.ifaces;
 
 import java.net.HttpCookie;
 import java.util.List;
