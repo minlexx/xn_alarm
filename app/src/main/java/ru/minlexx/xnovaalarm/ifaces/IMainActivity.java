@@ -8,5 +8,5 @@ public interface IMainActivity {
     void notifyServiceStateChange();
 
     void onXNovaLoginOK(List<HttpCookie> cookies);
-    void onXNovaLoginFail();
+    void onXNovaLoginFail(String errorStr);
 }

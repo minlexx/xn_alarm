@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -240,10 +241,20 @@ public class MainActivity extends Activity
     @Override
     public void onXNovaLoginOK(List<HttpCookie> cookies) {
         btn_login.setEnabled(false);
+        //
+        Log.i(TAG, "Login OK!");
+        Toast tst = Toast.makeText(this, "Login OK!", Toast.LENGTH_SHORT);
+        tst.show();
     }
 
     @Override
-    public void onXNovaLoginFail() {
+    public void onXNovaLoginFail(String errorStr) {
         btn_login.setEnabled(true);
+        //
+        if ((errorStr != null) && (errorStr.length() > 0)) {
+            Log.e(TAG, "Login error: " + errorStr);
+            Toast tst = Toast.makeText(this, errorStr, Toast.LENGTH_SHORT);
+            tst.show();
+        }
     }
 }

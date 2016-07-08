@@ -3,6 +3,9 @@ package ru.minlexx.xnovaalarm;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,11 +23,13 @@ import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
 
 public class AuthTask extends AsyncTask<String, Void, List<HttpCookie>> {
 
-    private static final String TAG = RetrieveTask.class.getName();
+    private static final String TAG = AuthTask.class.getName();
     private Exception m_exception = null;
     private IMainActivity m_mainActivity = null;
     private String m_login = null;
     private String m_pass = null;
+    private boolean m_loginOk = false;
+    private String m_loginErrorStr = null;
 
     public AuthTask(IMainActivity mainActivity, String login, String pass) {
         m_mainActivity = mainActivity;
@@ -34,12 +39,9 @@ public class AuthTask extends AsyncTask<String, Void, List<HttpCookie>> {
 
     @Override
     protected List<HttpCookie> doInBackground(String... unused) {
-        /*int num_params = params.length;
-        if (num_params < 1) {
-            Log.e(TAG, "AuthTask did not receive enough params!");
-            return null;
-        }*/
-
+        m_loginOk = false;
+        m_loginErrorStr = "";
+        //
         List<HttpCookie> ret = new ArrayList<HttpCookie>();
         // test content
         HttpCookie cook1 = new HttpCookie("u5_id", "87");
@@ -74,7 +76,8 @@ public class AuthTask extends AsyncTask<String, Void, List<HttpCookie>> {
             //
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+            conn.setRequestProperty("Content-Type",
+                    "application/x-www-form-urlencoded; charset=UTF-8");
             conn.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
             conn.setRequestProperty("Origin", "http://uni5.xnova.su");
             conn.setRequestProperty("Referer", "http://uni5.xnova.su/");
@@ -84,20 +87,39 @@ public class AuthTask extends AsyncTask<String, Void, List<HttpCookie>> {
             conn.setDoOutput(true);
             conn.getOutputStream().write(postDataBytes);
             //
-            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream(), "UTF-8"));
             for (int c; (c = in.read()) >= 0; ) {
-                //System.out.print((char) c);
                 response.append((char)c);
             }
             String responseString = response.toString();
+            Log.d(TAG, responseString);
+            // * correct login response string:
+            //   {"status":1,"message":"","html":"","data":{"redirect":"\/overview\/"}}
+            // * incorrect login respons string:
+            //   {"status":0,"message":"\u041d... E-mail ...","html":"","data":[]}
+            // parse response status code
+            JSONObject rootObj = new JSONObject(responseString);
+            int loginStatus = rootObj.getInt("status");
+            if (loginStatus == 1) {
+                Log.i(TAG, "Login OK");
+                m_loginOk = true;
+            } else {
+                m_loginErrorStr = rootObj.getString("message");
+                Log.e(TAG, "Login error: " + m_loginErrorStr);
+            }
             //
             conn.disconnect();
+            conn = null;
         } catch (UnsupportedEncodingException uee) {
             m_exception = uee;
             Log.e(TAG, "Unsupported encoding!", uee);
         } catch (IOException ioe) {
             m_exception = ioe;
             Log.e(TAG, "Network error during auth process!", ioe);
+        } catch (JSONException je) {
+            m_exception = je;
+            Log.e(TAG, "Response JSON parse error!", je);
         } finally {
             if (conn != null)
                 conn.disconnect();
@@ -109,6 +131,12 @@ public class AuthTask extends AsyncTask<String, Void, List<HttpCookie>> {
     @Override
     protected void onPostExecute(List<HttpCookie> httpCookies) {
         super.onPostExecute(httpCookies);
-        m_mainActivity.onXNovaLoginOK(httpCookies);
+        if (m_loginOk && (m_mainActivity != null))
+            m_mainActivity.onXNovaLoginOK(httpCookies);
+        if (!m_loginOk && (m_mainActivity != null)) {
+            if (m_loginErrorStr == null)
+                m_loginErrorStr = "Error unknown!";
+            m_mainActivity.onXNovaLoginFail(m_loginErrorStr);
+        }
     }
 }
