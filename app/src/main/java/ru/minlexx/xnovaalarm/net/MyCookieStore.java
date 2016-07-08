@@ -68,8 +68,22 @@ public class MyCookieStore implements CookieStore {
 
     @Override
     public List<HttpCookie> get(URI uri) {
+        if (uri == null) {
+            throw new NullPointerException("uri == null");
+        }
+        //
         Log.d(TAG, String.format("CookieStore::get(\"%s\")", uri.toString()));
-        return _memCookiesMap.get(uri);
+        //
+        // this should never return null
+        List<HttpCookie> ret = new ArrayList<HttpCookie>();
+        List<HttpCookie> cookiesForUrl = _memCookiesMap.get(uri);
+        if (cookiesForUrl != null)
+            ret.addAll(cookiesForUrl);
+        //
+        Log.d(TAG, String.format("CookieStore::get(\"%s\"): returning %d items",
+                uri.toString(), ret.size()));
+        //
+        return ret;
     }
 
     @Override
