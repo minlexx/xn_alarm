@@ -14,12 +14,16 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.HttpCookie;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
 import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
+import ru.minlexx.xnovaalarm.net.MyCookieStore;
 
 
 public class MainActivity extends Activity
@@ -35,6 +39,10 @@ public class MainActivity extends Activity
     private RefresherService m_service = null;
     private boolean m_bound = false;
 
+    // cookies!
+    MyCookieStore m_cookieStore = null;
+    CookieManager m_cookMgr = null;
+
     // GUI controls
     private CheckBox cb_remember = null;
     private EditText et_login = null;
@@ -48,6 +56,8 @@ public class MainActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //
+        m_cookieStore = new MyCookieStore();
+        doInitializeCookiesManager();
         // get GUI controls
         cb_remember = (CheckBox)findViewById(R.id.cb_remember);
         et_login = (EditText)findViewById(R.id.et_xnovalogin);
@@ -96,6 +106,8 @@ public class MainActivity extends Activity
             et_login.setText("");
             et_pass.setText("");
         }
+        // restore cookies
+        m_cookieStore.loadCookiesFrom(prefs);
         // Bind to local service
         Intent intent = new Intent(this, RefresherService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
@@ -104,7 +116,7 @@ public class MainActivity extends Activity
     @Override
     protected void onStop() {
         super.onStop();
-        this.doUnbindFromService();
+        doUnbindFromService();
         // save savedata?
         SharedPreferences prefs = getSharedPreferences(PREFS_AUTH_FILENAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor prefs_editor = prefs.edit();
@@ -118,6 +130,9 @@ public class MainActivity extends Activity
             prefs_editor.putString(PREFS_LOGIN, "");
             prefs_editor.putString(PREFS_PASS, "");
         }
+        // save cookies
+        m_cookieStore.storeCookiesTo(prefs_editor);
+        //
         prefs_editor.apply();
     }
 
@@ -132,8 +147,14 @@ public class MainActivity extends Activity
             m_bound = false;
             m_service = null;
             Log.d(TAG, "unbound from service.");
-            this.updateButtonsEnabledStates();
+            updateButtonsEnabledStates();
         }
+    }
+
+    protected void doInitializeCookiesManager() {
+        m_cookMgr = new CookieManager(m_cookieStore, CookiePolicy.ACCEPT_ALL);
+        CookieHandler.setDefault(m_cookMgr);
+        Log.d(TAG, "cookies manager init complete");
     }
 
     public void onClickBeginLogin(View view) {
@@ -215,16 +236,16 @@ public class MainActivity extends Activity
     @Override
     public void notifyServiceStateChange() {
         Log.i(TAG, "notifyServiceStateChange(): will update buttons");
-        this.updateButtonsEnabledStates();
+        updateButtonsEnabledStates();
     }
 
     @Override
     public void onXNovaLoginOK(List<HttpCookie> cookies) {
-        //
+        btn_login.setEnabled(false);
     }
 
     @Override
     public void onXNovaLoginFail() {
-        //
+        btn_login.setEnabled(true);
     }
 }
