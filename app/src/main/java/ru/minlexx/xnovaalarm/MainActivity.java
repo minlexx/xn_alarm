@@ -18,8 +18,6 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.HttpCookie;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 
 import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
@@ -159,12 +157,12 @@ public class MainActivity extends Activity
 
     public void onClickBeginLogin(View view) {
         Log.d(TAG, "onClickBeginLogin()");
-        AuthTask at = new AuthTask(this);
-        try {
-            at.execute(new URL("http", "uni5.xnova.su", 80, "/"));
-        } catch (MalformedURLException mue) {
-            mue.printStackTrace();
-        }
+        // get user auth data
+        final String s_login = et_login.getText().toString();
+        final String s_pass = et_pass.getText().toString();
+        // begin auth
+        AuthTask at = new AuthTask(this, s_login, s_pass);
+        at.execute("");
     }
 
     public void onClickStartService(View view) {
