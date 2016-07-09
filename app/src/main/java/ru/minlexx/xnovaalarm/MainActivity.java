@@ -41,6 +41,7 @@ public class MainActivity extends Activity
     // cookies!
     MyCookieStore m_cookieStore = null;
     CookieManager m_cookMgr = null;
+    boolean m_loginOk = false;
 
     // GUI controls
     private CheckBox cb_remember = null;
@@ -156,8 +157,15 @@ public class MainActivity extends Activity
         Log.d(TAG, "cookies manager init complete");
     }
 
+    public boolean isAuthorized() {
+        // either we just had a successful login attempt,
+        // or cookies were just loaded from persistent storage
+        return m_loginOk || m_cookieStore.doWeHaveAllLoginCookies();
+    }
+
     public void onClickBeginLogin(View view) {
-        Log.d(TAG, "onClickBeginLogin()");
+        // disable button to prevent double click :D
+        btn_login.setEnabled(false);
         // get user auth data
         final String s_login = et_login.getText().toString();
         final String s_pass = et_pass.getText().toString();
@@ -191,7 +199,10 @@ public class MainActivity extends Activity
         if (m_service == null) {
             // well, service is most probably not running and we are not bound to it
             // mark buttons as ready to start it
-            btn_starts.setEnabled(true);
+            if (isAuthorized()) {
+                // enable "Start service" only if had a successful login
+                btn_starts.setEnabled(true);
+            }
             btn_stops.setEnabled(false);
             return;
         }
@@ -241,6 +252,7 @@ public class MainActivity extends Activity
     @Override
     public void onXNovaLoginOK(List<HttpCookie> cookies) {
         btn_login.setEnabled(false);
+        m_loginOk = true; // we had a ssuccess ful login attempt
         //
         Log.i(TAG, "Login OK!");
         Toast tst = Toast.makeText(this, "Login OK!", Toast.LENGTH_SHORT);
@@ -250,6 +262,7 @@ public class MainActivity extends Activity
     @Override
     public void onXNovaLoginFail(String errorStr) {
         btn_login.setEnabled(true);
+        m_loginOk = false; // login failed!
         //
         if ((errorStr != null) && (errorStr.length() > 0)) {
             Log.e(TAG, "Login error: " + errorStr);
