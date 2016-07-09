@@ -73,6 +73,23 @@ public class MyCookieStore implements CookieStore {
         }
     }
 
+    public boolean doWeHaveAllLoginCookies() {
+        HttpCookie u5_id = getCookieByName(PREFS_COOKIE_U5_ID);
+        HttpCookie u5_secret = getCookieByName(PREFS_COOKIE_U5_SECRET);
+        HttpCookie u5_full = getCookieByName(PREFS_COOKIE_U5_FULL);
+        //
+        if ((u5_id == null) || (u5_secret == null) || (u5_full == null))
+            return false;
+
+        String val = u5_id.getValue();
+        if (val.isEmpty() || val.equals("0")) return false;
+        val = u5_secret.getValue();
+        if (val.isEmpty()) return false;
+        // seems like we have all login cookies set up
+        Log.i(TAG, "doWeHaveAllLoginCookies(): Looks like we have all cookies.");
+        return true;
+    }
+
     public synchronized HttpCookie getCookieByName(String name) {
         final List<HttpCookie> all = getCookies();
         for(HttpCookie cook: all) {
@@ -177,7 +194,7 @@ public class MyCookieStore implements CookieStore {
 
     @Override
     public synchronized List<HttpCookie> getCookies() {
-        Log.i(TAG, "CookieStore::getCookies() called");
+        //Log.i(TAG, "CookieStore::getCookies() called");
         // all cookies for all URLs
         final List<HttpCookie> ret = new ArrayList<>();
         for(List<HttpCookie> list: _memCookiesMap.values()) {
