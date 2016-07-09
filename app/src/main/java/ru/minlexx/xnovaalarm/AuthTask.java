@@ -123,9 +123,16 @@ public class AuthTask extends AsyncTask<String, Void, String> {
         if (m_loginOk && (m_mainActivity != null))
             m_mainActivity.onXNovaLoginOK();
         if (!m_loginOk && (m_mainActivity != null)) {
-            if (m_loginErrorStr == null)
-                m_loginErrorStr = "Error unknown!";
-            m_mainActivity.onXNovaLoginFail(m_loginErrorStr);
+            String message = m_loginErrorStr;
+            if (m_loginErrorStr == null) {
+                if (m_exception != null) {
+                    message = String.format("Login error: Exception happened: %s",
+                            m_exception.toString());
+                } else {
+                    message = "Error unknown!";
+                }
+            }
+            m_mainActivity.onXNovaLoginFail(message);
         }
     }
 }
