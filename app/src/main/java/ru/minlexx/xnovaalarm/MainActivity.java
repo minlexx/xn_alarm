@@ -250,7 +250,7 @@ public class MainActivity extends Activity
     }
 
     @Override
-    public void onXNovaLoginOK(List<HttpCookie> cookies) {
+    public void onXNovaLoginOK() {
         btn_login.setEnabled(false);
         m_loginOk = true; // we had a ssuccess ful login attempt
         //

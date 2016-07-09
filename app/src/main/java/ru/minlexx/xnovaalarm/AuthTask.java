@@ -10,18 +10,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
 
 import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
 
 
-public class AuthTask extends AsyncTask<String, Void, List<HttpCookie>> {
+public class AuthTask extends AsyncTask<String, Void, String> {
 
     private static final String TAG = AuthTask.class.getName();
     private Exception m_exception = null;
@@ -38,17 +35,9 @@ public class AuthTask extends AsyncTask<String, Void, List<HttpCookie>> {
     }
 
     @Override
-    protected List<HttpCookie> doInBackground(String... unused) {
+    protected String doInBackground(String... unused) {
         m_loginOk = false;
         m_loginErrorStr = "";
-        //
-        List<HttpCookie> ret = new ArrayList<HttpCookie>();
-        // test content
-        HttpCookie cook1 = new HttpCookie("u5_id", "87");
-        cook1.setDomain("uni5.xnova.su");
-        cook1.setPath("/");
-        cook1.setVersion(0);
-        ret.add(cook1);
 
         // vars for HTTP interaction
         URL url;
@@ -125,14 +114,14 @@ public class AuthTask extends AsyncTask<String, Void, List<HttpCookie>> {
                 conn.disconnect();
         }
 
-        return ret;
+        return null;
     }
 
     @Override
-    protected void onPostExecute(List<HttpCookie> httpCookies) {
-        super.onPostExecute(httpCookies);
+    protected void onPostExecute(String nullString) {
+        super.onPostExecute(nullString);
         if (m_loginOk && (m_mainActivity != null))
-            m_mainActivity.onXNovaLoginOK(httpCookies);
+            m_mainActivity.onXNovaLoginOK();
         if (!m_loginOk && (m_mainActivity != null)) {
             if (m_loginErrorStr == null)
                 m_loginErrorStr = "Error unknown!";
