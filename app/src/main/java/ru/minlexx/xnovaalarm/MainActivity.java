@@ -18,8 +18,6 @@ import android.widget.Toast;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
-import java.net.HttpCookie;
-import java.util.List;
 
 import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
 import ru.minlexx.xnovaalarm.net.MyCookieStore;
@@ -177,13 +175,7 @@ public class MainActivity extends Activity
     public void onClickStartService(View view) {
         Log.d(TAG, "onClickStartService()");
 
-        // get user auth data
-        final String s_login = et_login.getText().toString();
-        final String s_pass = et_pass.getText().toString();
-
         Intent ssi = new Intent(this, RefresherService.class);
-        ssi.putExtra(RefresherService.EXTRA_XNOVA_LOGIN, s_login);
-        ssi.putExtra(RefresherService.EXTRA_XNOVA_PASS, s_pass);
         startService(ssi);
     }
 
