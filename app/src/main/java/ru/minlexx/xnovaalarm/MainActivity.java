@@ -247,7 +247,9 @@ public class MainActivity extends Activity
         m_loginOk = true; // we had a ssuccess ful login attempt
         //
         Log.i(TAG, "Login OK!");
-        Toast tst = Toast.makeText(this, "Login OK!", Toast.LENGTH_SHORT);
+        //final CharSequence toastText = getResources().getText(R.string.login_ok, "Login OK!");
+        //Toast tst = Toast.makeText(this, toastText, Toast.LENGTH_SHORT);
+        Toast tst = Toast.makeText(this, R.string.login_ok, Toast.LENGTH_SHORT);
         tst.show();
     }
 
