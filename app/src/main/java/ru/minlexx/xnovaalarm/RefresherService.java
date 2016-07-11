@@ -168,6 +168,12 @@ public class RefresherService extends Service {
                 xn_url = new URL("http", XN_HOST, 80, "/overview/");
                 Log.d(ITAG, "Downloading: " + xn_url.toString());
                 conn = (HttpURLConnection) xn_url.openConnection();
+                // connection parameters
+                conn.setRequestProperty("Referer", "http://uni5.xnova.su/overview/");
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) " +
+                        "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                        "Chrome/50.0.2661.102 Safari/537.36");
+                //
                 InputStreamReader ins = new InputStreamReader(conn.getInputStream());
                 BufferedReader bufr = new BufferedReader(ins);
                 while ((s = bufr.readLine()) != null) {
@@ -175,6 +181,7 @@ public class RefresherService extends Service {
                 }
                 bufr.close();
                 conn.disconnect();
+                conn = null;
             } catch (IOException ioe) {
                 Log.e(ITAG, "Failed to download overview!", ioe);
             } finally {
