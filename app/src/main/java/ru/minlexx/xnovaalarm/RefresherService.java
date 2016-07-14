@@ -11,14 +11,26 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
+import ru.minlexx.xnovaalarm.pojo.XNFlight;
 
 
 public class RefresherService extends Service {
@@ -147,12 +159,16 @@ public class RefresherService extends Service {
         private final String ITAG = OverviewRefreshTask.class.getName();
         private final String XN_HOST = "uni5.xnova.su";
 
+        private int m_newMessagesCount = 0;
+        private List<XNFlight> m_flights = null;
+
         @Override
         public void run() {
             Log.d(ITAG, "run() !");
             //
             try {
                 String overview_content = download_overview();
+                parse_overview(overview_content);
             } catch (Exception e) {
                 Log.e(ITAG, "Refresh overview failed!", e);
             }
@@ -190,6 +206,85 @@ public class RefresherService extends Service {
             }
             //
             return response.toString();
+        }
+
+        protected void parse_overview(String html) {
+            m_newMessagesCount = 0;
+            if (m_flights == null) {
+                m_flights = new ArrayList<XNFlight>(20);
+            }
+            m_flights.clear();
+            //
+            Document doc = Jsoup.parse(html, "https://uni5.xnova.su/");
+            Log.d(ITAG, "Title: " + doc.title());
+
+            // get new messages count
+            // <span class="sprite ico_mail"></span> <b>0</b>
+            Elements spans_mail = doc.select("span.ico_mail");
+            if (spans_mail != null) {
+                for (Element span : spans_mail) {
+                    Element bold = span.nextElementSibling();
+                    if (bold != null) {
+                        String snum_mails = bold.text();
+                        m_newMessagesCount = Integer.parseInt(snum_mails);
+                    }
+                }
+            }
+
+            // get flights
+            // <th class="text-xs-left" colspan="3">
+            // first child: <span class="flight owntransport"> ...
+            // next sibling: <script>FlotenTime('bxxfs4', 1636);</script>
+            Elements ths = doc.select("th.text-xs-left");
+            Pattern regex_pattern = Pattern.compile("(\\d+)\\);");
+            //
+            if (ths != null) {
+                for (Element th: ths) {
+                    Element script = th.nextElementSibling();
+                    if (script != null) {
+                        String script_text = script.data();
+                        System.out.printf("Found flight: %s (%s)\n",
+                                script.toString(), script_text);
+                        XNFlight flight = new XNFlight();
+                        //
+                        // get flight time left from script tag
+                        script_text = script_text.substring(21); // = "1636);"
+                        Matcher regex_matcher = regex_pattern.matcher(script_text);
+                        if (regex_matcher.find()) {
+                            String s_flotenTime = regex_matcher.group(1);
+                            flight.timeLeft = Integer.parseInt(s_flotenTime);
+                        }
+
+                        // get flight span
+                        Element span = th.child(0);
+                        if ((span != null) && (span.nodeName().equals("span"))) {
+                            // get flight mission from span class
+                            // examples: attack espionage / flight return
+                            // <span class="flight ownespionage">
+                            // <span class="return ownespionage">
+                            Set<String> span_classes = span.classNames();
+                            if (span_classes != null) {
+                                for (String span_class: span_classes) {
+                                    if (!span_class.equals("flight") && !span_class.equals("return"))
+                                        flight.mission = span_class;
+                                    if (span_class.equals("return"))
+                                        flight.isReturn = true;
+                                }
+                            }
+                        }
+                        //
+                        m_flights.add(flight);
+                    } else {
+                        Log.d(ITAG, "Flight with no floten-time");
+                    }
+
+                    // statistics output
+                    Log.d(ITAG, "=================================");
+                    for (XNFlight fl: m_flights) {
+                        Log.d(ITAG, "Flight " + fl.toString());
+                    }
+                }
+            }
         }
     }
 }
