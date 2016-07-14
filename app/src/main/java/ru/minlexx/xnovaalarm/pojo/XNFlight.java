@@ -4,11 +4,11 @@ import java.util.Locale;
 
 
 public class XNFlight {
-    String mission;
-    String coordFrom;
-    String coordTo;
-    int timeLeft;
-    boolean isReturn;
+    public String mission;
+    public String coordFrom;
+    public String coordTo;
+    public int timeLeft;
+    public boolean isReturn;
 
     public XNFlight() {
         mission = "";
