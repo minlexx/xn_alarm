@@ -18,6 +18,13 @@ public class XNFlight {
         isReturn = false;
     }
 
+    public boolean isEnemyAttack() {
+        if (mission != null) {
+            if (mission.equals("attack") && !isReturn) return true;
+        }
+        return false;
+    }
+
     @Override
     public int hashCode() {
         int ret = timeLeft;
