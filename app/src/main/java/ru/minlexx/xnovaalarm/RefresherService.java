@@ -5,19 +5,22 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.Color;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Set;
@@ -36,8 +39,11 @@ import ru.minlexx.xnovaalarm.pojo.XNFlight;
 public class RefresherService extends Service {
 
     private static final String TAG = RefresherService.class.getName();
+
     private final int NOTIFICATION_ID = R.string.local_service_started;
+    private final int NOTIFICATION_ID_ALARM = R.string.attack_alarm;
     private NotificationManager mNM = null;
+
     private final LocalBinder mBinder = new LocalBinder();
     private boolean m_is_started = false;
 
@@ -141,9 +147,65 @@ public class RefresherService extends Service {
         mNM.notify(NOTIFICATION_ID, notification);
     }
 
+    protected void showNotification_AM(XNFlight flight, int new_messages) {
+        Log.i(TAG, String.format(Locale.getDefault(),
+                "showNotification_AM(flight=\"%s\", new_msgs=%d)",
+                (flight != null ? flight.toString() : "no flight"), new_messages));
+        //
+        CharSequence text = getText(R.string.attack_alarm);
+        CharSequence title = getText(R.string.xnova_alarm);
+        String flights_line = null;
+        String messages_line = null;
+        StringBuilder contents = new StringBuilder();
+        if (flight != null) {
+            flights_line = String.format(Locale.getDefault(), "%d sec to attack",
+                    flight.timeLeft);
+            contents.append(flights_line);
+        }
+        if (new_messages > 0) {
+            messages_line = String.format(Locale.getDefault(), "%s new messages.", new_messages);
+            if (contents.length() > 0) contents.append("; ");
+            contents.append(messages_line);
+        }
+        //
+        long[] vibPattern = {500,500,500,500,500,500,500,500,500};
+        //
+        NotificationCompat.InboxStyle nstyle = new NotificationCompat.InboxStyle();
+        if (flights_line != null) nstyle.addLine(flights_line);
+        if (messages_line != null)  nstyle.addLine(messages_line);
+        nstyle.setBigContentTitle("big content title");
+        nstyle.setSummaryText("summary text");
+        //
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.mipmap.logo); // the status icon
+        builder.setTicker(text); // the status text
+        builder.setWhen(System.currentTimeMillis()); // time stamp
+        builder.setContentTitle(title); // label of the entry
+        builder.setContentText(contents.toString()); // contents of the entry
+        builder.setOngoing(false);
+        builder.setLights(Color.BLUE, 500, 500);
+        builder.setVibrate(vibPattern);
+        builder.setStyle(nstyle);
+        // set notification sound only if there is an attacking flight
+        if (flight != null) {
+            //Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+            builder.setSound(soundUri);
+        }
+        //
+        Notification notification = builder.build();
+        mNM.notify(NOTIFICATION_ID_ALARM, notification);
+    }
+
     private void hideNotification() {
         if (mNM != null) {
             mNM.cancel(NOTIFICATION_ID);
+        }
+    }
+
+    private void hideNotification_AM() {
+        if (mNM != null) {
+            mNM.cancel(NOTIFICATION_ID_ALARM);
         }
     }
 
@@ -169,12 +231,15 @@ public class RefresherService extends Service {
             try {
                 String overview_content = download_overview();
                 parse_overview(overview_content);
+                process_results();
             } catch (Exception e) {
                 Log.e(ITAG, "Refresh overview failed!", e);
             }
         }
 
         protected String download_overview() {
+            RefresherService.this.hideNotification_AM();
+            //
             URL xn_url;
             HttpURLConnection conn = null;
             StringBuilder response = new StringBuilder();
@@ -211,7 +276,7 @@ public class RefresherService extends Service {
         protected void parse_overview(String html) {
             m_newMessagesCount = 0;
             if (m_flights == null) {
-                m_flights = new ArrayList<XNFlight>(20);
+                m_flights = new ArrayList<>(20);
             }
             m_flights.clear();
             //
@@ -284,6 +349,35 @@ public class RefresherService extends Service {
                         Log.d(ITAG, "Flight " + fl.toString());
                     }
                 }
+            }
+        }
+
+        protected void process_results() {
+            XNFlight shortest_flight = null;
+            int min_time = -1;
+            for (XNFlight fl: m_flights) {
+                // only attacking flights
+                if (fl.isEnemyAttack()) {
+                    int time_left = fl.timeLeft;
+                    if (min_time == -1) {
+                        // first result ever
+                        min_time = time_left;
+                        shortest_flight = fl;
+                    } else {
+                        // is new result shorter that current
+                        if (time_left < min_time) {
+                            min_time = time_left;
+                            shortest_flight = fl;
+                        }
+                    }
+                }
+            }
+
+            if ((shortest_flight != null) || (m_newMessagesCount > 0)) {
+                // either we have attacking flight, or we have new message(s)
+                RefresherService.this.showNotification_AM(shortest_flight, m_newMessagesCount);
+            } else {
+                Log.d(ITAG, "process_results(): no incoming attacks or new messages.");
             }
         }
     }
