@@ -19,6 +19,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -43,6 +45,7 @@ public class RefresherService extends Service {
     private final int NOTIFICATION_ID = R.string.local_service_started;
     private final int NOTIFICATION_ID_ALARM = R.string.attack_alarm;
     private NotificationManager mNM = null;
+    private Notification m_serviceNotification = null;
 
     private final LocalBinder mBinder = new LocalBinder();
     private boolean m_is_started = false;
@@ -50,6 +53,8 @@ public class RefresherService extends Service {
     private IMainActivity m_mainActivity = null;
 
     private Timer m_timer = null;
+    private OverviewRefreshTask m_refreshTask = null;
+    private long m_lastUpdateTime = 0;
 
     /**
      * Class for clients to access.  Because we know this service always
@@ -65,29 +70,26 @@ public class RefresherService extends Service {
     public RefresherService() {
     }
 
-    public void set_mainActivity(IMainActivity mainActivity) {
-        this.m_mainActivity = mainActivity;
-        if (mainActivity != null)
-            Log.d(TAG, "IMainActivity pointer was set on the service!");
-        else
-            Log.d(TAG, "IMainActivity pointer was unset from the service.");
-    }
-
     @Override
     public void onCreate() {
         Log.d(TAG, "onCreate()");
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        m_serviceNotification = this.createServiceNotification();
         m_timer = new Timer("OverviewRefreshTimer", false);
     }
 
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy()");
-        m_timer.cancel();
-        m_timer = null;
+        stopForeground(true); // true = remove notification
         hideNotification();
+        if (m_timer != null) m_timer.cancel();
+        if (m_refreshTask != null) m_refreshTask.cancel();
+        m_timer = null;
+        m_refreshTask = null;
         m_is_started = false;
         m_mainActivity = null;
+        m_serviceNotification = null;
     }
 
     @Override
@@ -97,54 +99,91 @@ public class RefresherService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(TAG, "onStartCommand(): Received start id " + startId + ": " + intent);
+        // care, intent may be null
+        Log.i(TAG, "onStartCommand(): Received start id " + startId + ": " +
+                ((intent != null) ? intent.toString(): "No intent"));
         //
         m_is_started = true;
         //
-        showNotification();
+        // mark self as foreground service
+        this.startForeground(NOTIFICATION_ID, m_serviceNotification);
+
+        // showNotification();
+        // ^^ not needed for foreground service as notification is
+        // already shown in onCreate()
         if (this.m_mainActivity != null)
             this.m_mainActivity.notifyServiceStateChange();
         //
-        //new RetrieveTask().execute("");
-        //
         // use timer instead, test
-        Log.d(TAG, "Will run task after 500 ms...");
+        Log.d(TAG, "Will run timer task after 500 ms...");
         createTimer();
 
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
 
     public boolean isStarted() { return m_is_started; }
 
 
-    /**
-     * Show a notification while this service is running.
-     */
-    private void showNotification() {
-        // In this sample, we'll use the same text for the ticker and the expanded notification
-        CharSequence text = getText(R.string.local_service_started);
+    public void set_mainActivity(IMainActivity mainActivity) {
+        this.m_mainActivity = mainActivity;
+        if (mainActivity != null)
+            Log.d(TAG, "IMainActivity pointer was set on the service!");
+        else
+            Log.d(TAG, "IMainActivity pointer was unset from the service.");
+    }
 
+    protected Notification createServiceNotification() {
+        return this.createServiceNotification(null);
+    }
+
+
+    protected Notification createServiceNotification(CharSequence contentText) {
+        // we will use the same text for the ticker and the expanded notification
+        CharSequence text = getText(R.string.local_service_started);
+        // intent to launch MainActivity on notification click
         Intent activityIntent = new Intent(this, MainActivity.class);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
         // The PendingIntent to launch our activity if the user selects this notification
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, activityIntent, 0);
+        // build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.mipmap.service_icon);  // the status icon
+        builder.setTicker(text);  // the status text
+        builder.setWhen(System.currentTimeMillis());  // the time stamp
+        builder.setContentTitle(getText(R.string.local_service_label));  // the label of the entry
+        // the contents of the entry
+        if (contentText == null)
+            builder.setContentText(text);
+        else
+            builder.setContentText(contentText);
+        builder.setContentIntent(contentIntent);  // The intent to send when the entry is clicked
+        builder.setOngoing(true);
+        builder.build();
+        return builder.build();
+    }
 
-        // Set the info for the views that show in the notification panel.
-        Notification notification = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.logo)  // the status icon
-                .setTicker(text)  // the status text
-                .setWhen(System.currentTimeMillis())  // the time stamp
-                .setContentTitle(getText(R.string.local_service_label))  // the label of the entry
-                .setContentText(text)  // the contents of the entry
-                .setContentIntent(contentIntent)  // The intent to send when the entry is clicked
-                .setOngoing(true)
-                .build();
 
-        // Send the notification.
-        mNM.notify(NOTIFICATION_ID, notification);
+    private synchronized void updateServiceNotification() {
+        //long curTime = System.currentTimeMillis();
+        //long secsPassed = (curTime - m_lastUpdateTime) / 1000;
+        //
+        StringBuilder content = new StringBuilder();
+        Calendar cal = new GregorianCalendar();
+        cal.setTimeInMillis(m_lastUpdateTime);
+        content.append("Last upd: "); // TODO: translate
+        content.append(String.format(Locale.getDefault(),
+                "%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)));
+        m_serviceNotification = this.createServiceNotification(content.toString());
+        //
+        this.showNotification();
+    }
+
+
+    private void showNotification() {
+        if (m_serviceNotification != null)
+            mNM.notify(NOTIFICATION_ID, m_serviceNotification);
     }
 
     protected void showNotification_AM(XNFlight flight, int new_messages) {
@@ -177,7 +216,7 @@ public class RefresherService extends Service {
         nstyle.setSummaryText("summary text");
         //
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.mipmap.logo); // the status icon
+        builder.setSmallIcon(R.mipmap.service_icon); // the status icon
         builder.setTicker(text); // the status text
         builder.setWhen(System.currentTimeMillis()); // time stamp
         builder.setContentTitle(title); // label of the entry
@@ -208,8 +247,6 @@ public class RefresherService extends Service {
             mNM.cancel(NOTIFICATION_ID_ALARM);
         }
     }
-
-    /******************************************************************************/
 
     private void createTimer() {
         // execute task every 10 minutes after a 0.5 sec delay
@@ -263,6 +300,7 @@ public class RefresherService extends Service {
                 bufr.close();
                 conn.disconnect();
                 conn = null;
+                RefresherService.this.m_lastUpdateTime = System.currentTimeMillis();
             } catch (IOException ioe) {
                 Log.e(ITAG, "Failed to download overview!", ioe);
             } finally {
@@ -379,6 +417,8 @@ public class RefresherService extends Service {
             } else {
                 Log.d(ITAG, "process_results(): no incoming attacks or new messages.");
             }
+            // update general service notification
+            RefresherService.this.updateServiceNotification();
         }
     }
 }
