@@ -21,6 +21,7 @@ import java.net.CookiePolicy;
 
 import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
 import ru.minlexx.xnovaalarm.net.MyCookieStore;
+//import ru.minlexx.xnovaalarm.pojo.XNFlight;
 
 
 public class MainActivity extends Activity
@@ -225,6 +226,11 @@ public class MainActivity extends Activity
             Log.d(TAG, "ServiceConnection.onServiceConnected(): successfully bound to service");
             //
             updateButtonsEnabledStates();
+            //
+            // test notification section
+            //XNFlight test_fl = new XNFlight();
+            //test_fl.timeLeft = 915; // 15 min 15 sec
+            //m_service.showNotification_AM(test_fl, 5);
         }
 
         @Override
