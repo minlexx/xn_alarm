@@ -222,7 +222,9 @@ public class MainActivity extends Activity
             RefresherService.LocalBinder binder = (RefresherService.LocalBinder)service;
             m_service = binder.getService();
             m_bound = true;
+            // let the service know about us
             m_service.set_mainActivity(MainActivity.this);
+            m_service.set_cookieStore(m_cookieStore);
             Log.d(TAG, "ServiceConnection.onServiceConnected(): successfully bound to service");
             //
             updateButtonsEnabledStates();

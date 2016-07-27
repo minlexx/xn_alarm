@@ -35,6 +35,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
+import ru.minlexx.xnovaalarm.net.MyCookieStore;
 import ru.minlexx.xnovaalarm.pojo.XNFlight;
 
 
@@ -51,6 +52,7 @@ public class RefresherService extends Service {
     private boolean m_is_started = false;
 
     private IMainActivity m_mainActivity = null;
+    private MyCookieStore m_cookieStore = null;
 
     private Timer m_timer = null;
     private OverviewRefreshTask m_refreshTask = null;
@@ -89,6 +91,7 @@ public class RefresherService extends Service {
         m_refreshTask = null;
         m_is_started = false;
         m_mainActivity = null;
+        m_cookieStore = null;
         m_serviceNotification = null;
     }
 
@@ -127,11 +130,12 @@ public class RefresherService extends Service {
 
     public void set_mainActivity(IMainActivity mainActivity) {
         this.m_mainActivity = mainActivity;
-        if (mainActivity != null)
-            Log.d(TAG, "IMainActivity pointer was set on the service!");
-        else
-            Log.d(TAG, "IMainActivity pointer was unset from the service.");
     }
+
+    public void set_cookieStore(MyCookieStore store) {
+        m_cookieStore = store;
+    }
+
 
     protected Notification createServiceNotification() {
         return this.createServiceNotification(null);
