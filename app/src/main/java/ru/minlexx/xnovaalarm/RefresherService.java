@@ -176,7 +176,9 @@ public class RefresherService extends Service {
         StringBuilder content = new StringBuilder();
         Calendar cal = new GregorianCalendar();
         cal.setTimeInMillis(m_lastUpdateTime);
-        content.append("Last upd: "); // TODO: translate
+        CharSequence s_lastUpdate = getText(R.string.last_update);
+        content.append(s_lastUpdate);
+        content.append(" ");
         content.append(String.format(Locale.getDefault(),
                 "%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE)));
         m_serviceNotification = this.createServiceNotification(content.toString());
