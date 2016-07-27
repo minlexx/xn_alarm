@@ -14,4 +14,5 @@
     <string name="xnova_alarm">XNova alarm</string>
     <string name="attack_alarm">Danger!</string>
     <string name="last_update">Last upd:</string>
+    <string name="alarm_enabled">Alarm enabled</string>
 </resources>

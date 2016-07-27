@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import java.net.CookieHandler;
@@ -49,6 +50,7 @@ public class MainActivity extends Activity
     private Button btn_starts = null;
     private Button btn_stops = null;
     private Button btn_login = null;
+    private Switch sw_alarm_enabled = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +59,7 @@ public class MainActivity extends Activity
         //
         m_cookieStore = new MyCookieStore();
         doInitializeCookiesManager();
+        Log.d(TAG, "onCreate(): cookies manager init complete");
         // get GUI controls
         cb_remember = (CheckBox)findViewById(R.id.cb_remember);
         et_login = (EditText)findViewById(R.id.et_xnovalogin);
@@ -64,6 +67,7 @@ public class MainActivity extends Activity
         btn_starts = (Button)findViewById(R.id.button_starts);
         btn_stops = (Button)findViewById(R.id.button_stops);
         btn_login = (Button)findViewById(R.id.button_login);
+        sw_alarm_enabled = (Switch)findViewById(R.id.sw_alarm_enabled);
     }
 
     @Override
@@ -107,6 +111,7 @@ public class MainActivity extends Activity
         }
         // restore cookies
         m_cookieStore.loadCookiesFrom(prefs);
+        Log.d(TAG, "onStart(): cookies loaded, binding to service...");
         // Bind to local service
         Intent intent = new Intent(this, RefresherService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
@@ -115,6 +120,7 @@ public class MainActivity extends Activity
     @Override
     protected void onStop() {
         super.onStop();
+        Log.d(TAG, "onStop(): begin, ubinding from service...");
         doUnbindFromService();
         // save savedata?
         SharedPreferences prefs = getSharedPreferences(PREFS_AUTH_FILENAME, Context.MODE_PRIVATE);
@@ -153,7 +159,6 @@ public class MainActivity extends Activity
     protected void doInitializeCookiesManager() {
         m_cookMgr = new CookieManager(m_cookieStore, CookiePolicy.ACCEPT_ALL);
         CookieHandler.setDefault(m_cookMgr);
-        Log.d(TAG, "cookies manager init complete");
     }
 
     public boolean isAuthorized() {
@@ -188,6 +193,15 @@ public class MainActivity extends Activity
         this.doUnbindFromService();
     }
 
+    public void onClickSwitchAlarmEnabled(View view) {
+        Log.d(TAG, "onClickSwitchAlarmEnabled()");
+        if (sw_alarm_enabled.isChecked()) {
+            this.onClickStartService(null);
+        } else {
+            this.onClickStopService(null);
+        }
+    }
+
     private void updateButtonsEnabledStates() {
         if (m_service == null) {
             // well, service is most probably not running and we are not bound to it
@@ -195,20 +209,26 @@ public class MainActivity extends Activity
             if (isAuthorized()) {
                 // enable "Start service" only if had a successful login
                 btn_starts.setEnabled(true);
+                sw_alarm_enabled.setEnabled(true);
             }
             btn_stops.setEnabled(false);
+            sw_alarm_enabled.setEnabled(false);
             return;
         }
-        boolean is_st = m_service.isStarted();
+        // we have a service pointer - switch is enabled
+        sw_alarm_enabled.setEnabled(true);
         //
-        Log.d(TAG, String.format("updateButtonsEnabledStates(): service is started: %b", is_st));
-        //
-        if (is_st) {
+        boolean is_started = m_service.isStarted();
+        Log.d(TAG, String.format("updateButtonsEnabledStates(): service is started: %b",
+                is_started));
+        if (is_started) {
             btn_starts.setEnabled(false);
             btn_stops.setEnabled(true);
+            sw_alarm_enabled.setChecked(true);
         } else {
             btn_starts.setEnabled(true);
             btn_stops.setEnabled(false);
+            sw_alarm_enabled.setChecked(false);
         }
     }
 

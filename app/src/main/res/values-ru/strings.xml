@@ -14,4 +14,5 @@
     <string name="xnova_alarm">XNova будильник</string>
     <string name="xnova_login">XNova логин:</string>
     <string name="xnova_password">XNova пароль:</string>
+    <string name="alarm_enabled">Будильник включен</string>
 </resources>

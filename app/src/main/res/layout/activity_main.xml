@@ -30,7 +30,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/et_xnovalogin"
             android:layout_weight="1"
-            android:inputType="text"
+            android:inputType="textEmailAddress"
             android:hint="@string/login" />
 
     </LinearLayout>
@@ -85,7 +85,7 @@
 
     <LinearLayout
         android:orientation="horizontal"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <Button
@@ -103,6 +103,20 @@
             android:id="@+id/button_stops"
             android:onClick="onClickStopService"
             android:enabled="false" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Switch
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/alarm_enabled"
+            android:id="@+id/sw_alarm_enabled"
+            android:onClick="onClickSwitchAlarmEnabled"
+            android:enabled="false"/>
     </LinearLayout>
 
 </LinearLayout>
