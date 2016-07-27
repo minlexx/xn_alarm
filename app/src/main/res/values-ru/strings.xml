@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="attack_alarm">Опасность!</string>
+    <string name="last_update">Посл. обн:</string>
+    <string name="local_service_label">Служба будильника XNova</string>
+    <string name="local_service_started">Будильник XNova запущен</string>
+    <string name="login">логин</string>
+    <string name="login_ok">Авторизация ОК!</string>
+    <string name="login_to_xnova">Войти в XNova</string>
+    <string name="password">пароль</string>
+    <string name="remember_account">Запомнить аккаунт</string>
+    <string name="start_service">Запустить службу</string>
+    <string name="stop_service">Остановить службу</string>
+    <string name="xnova_alarm">XNova будильник</string>
+    <string name="xnova_login">XNova логин:</string>
+    <string name="xnova_password">XNova пароль:</string>
+</resources>
