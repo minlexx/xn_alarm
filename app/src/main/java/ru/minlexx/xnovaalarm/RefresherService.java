@@ -267,8 +267,8 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         NotificationCompat.InboxStyle nstyle = new NotificationCompat.InboxStyle();
         if (flights_line != null) nstyle.addLine(flights_line);
         if (messages_line != null)  nstyle.addLine(messages_line);
-        nstyle.setBigContentTitle(title);
-        nstyle.setSummaryText(text);
+        nstyle.setBigContentTitle(title); // his a real title
+        nstyle.setSummaryText(text); // this is the lowest line
         //
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.mipmap.service_icon); // the status icon
