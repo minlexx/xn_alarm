@@ -13,6 +13,8 @@
     <string name="login_ok">Login OK!</string>
     <string name="xnova_alarm">XNova alarm</string>
     <string name="attack_alarm">Danger!</string>
+    <string name="seconds_to_attack">%d sec till attack</string>
+    <string name="new_messages">%d new messages</string>
     <string name="last_update">Last upd:</string>
     <string name="alarm_enabled">Alarm enabled</string>
     <string name="refresh_timeout_mins">Refresh interval, minutes:</string>

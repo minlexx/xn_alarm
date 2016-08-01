@@ -249,12 +249,15 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         String messages_line = null;
         StringBuilder contents = new StringBuilder();
         if (flight != null) {
-            flights_line = String.format(Locale.getDefault(), "%d sec to attack",
+            flights_line = String.format(Locale.getDefault(),
+                    getText(R.string.seconds_to_attack).toString(),  // "%d sec to attack",
                     flight.timeLeft);
             contents.append(flights_line);
         }
         if (new_messages > 0) {
-            messages_line = String.format(Locale.getDefault(), "%s new messages.", new_messages);
+            messages_line = String.format(Locale.getDefault(),
+                    getText(R.string.new_messages).toString(),  // "%d new messages.",
+                    new_messages);
             if (contents.length() > 0) contents.append("; ");
             contents.append(messages_line);
         }
@@ -264,8 +267,8 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         NotificationCompat.InboxStyle nstyle = new NotificationCompat.InboxStyle();
         if (flights_line != null) nstyle.addLine(flights_line);
         if (messages_line != null)  nstyle.addLine(messages_line);
-        nstyle.setBigContentTitle("big content title");
-        nstyle.setSummaryText("summary text");
+        nstyle.setBigContentTitle(title);
+        nstyle.setSummaryText(text);
         //
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setSmallIcon(R.mipmap.service_icon); // the status icon
