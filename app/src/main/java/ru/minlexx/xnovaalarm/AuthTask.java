@@ -15,21 +15,19 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 
-import ru.minlexx.xnovaalarm.ifaces.IMainActivity;
-
 
 public class AuthTask extends AsyncTask<String, Void, String> {
 
     private static final String TAG = AuthTask.class.getName();
     private Exception m_exception = null;
-    private IMainActivity m_mainActivity = null;
+    private AuthResultListener m_resultListener = null;
     private String m_login = null;
     private String m_pass = null;
     private boolean m_loginOk = false;
     private String m_loginErrorStr = null;
 
-    public AuthTask(IMainActivity mainActivity, String login, String pass) {
-        m_mainActivity = mainActivity;
+    public AuthTask(AuthResultListener resultListener, String login, String pass) {
+        m_resultListener = resultListener;
         m_login = login;
         m_pass = pass;
     }
@@ -120,9 +118,9 @@ public class AuthTask extends AsyncTask<String, Void, String> {
     @Override
     protected void onPostExecute(String nullString) {
         super.onPostExecute(nullString);
-        if (m_loginOk && (m_mainActivity != null))
-            m_mainActivity.onXNovaLoginOK();
-        if (!m_loginOk && (m_mainActivity != null)) {
+        if (m_loginOk && (m_resultListener != null))
+            m_resultListener.onXNovaLoginOK();
+        if (!m_loginOk && (m_resultListener != null)) {
             String message = m_loginErrorStr;
             if (m_loginErrorStr == null) {
                 if (m_exception != null) {
@@ -132,7 +130,15 @@ public class AuthTask extends AsyncTask<String, Void, String> {
                     message = "Error unknown!";
                 }
             }
-            m_mainActivity.onXNovaLoginFail(message);
+            m_resultListener.onXNovaLoginFail(message);
         }
+    }
+
+    /**
+     * Callers should implements these callbacks
+     */
+    public interface AuthResultListener {
+        void onXNovaLoginOK();
+        void onXNovaLoginFail(String errorStr);
     }
 }

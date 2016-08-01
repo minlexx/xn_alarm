@@ -1,0 +1,49 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="ru.minlexx.xnovaalarm.ConfigureFragment"
+
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:paddingLeft="@dimen/frag_horizontal_margin"
+    android:paddingRight="@dimen/frag_horizontal_margin"
+    android:paddingTop="@dimen/frag_vertical_margin"
+    android:paddingBottom="@dimen/frag_vertical_margin">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Switch
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/alarm_enabled"
+            android:id="@+id/sw_alarm_enabled"
+            android:enabled="false"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="@string/refresh_timeout_mins"
+            android:id="@+id/tv_refreshinterval"
+            android:layout_weight="2"/>
+
+        <EditText
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:ems="10"
+            android:id="@+id/et_refreshinterval"
+            android:text="15"/>
+    </LinearLayout>
+</LinearLayout>

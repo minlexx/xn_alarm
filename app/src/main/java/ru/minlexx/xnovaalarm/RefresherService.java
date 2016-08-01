@@ -4,18 +4,25 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -39,10 +46,13 @@ import ru.minlexx.xnovaalarm.net.MyCookieStore;
 import ru.minlexx.xnovaalarm.pojo.XNFlight;
 
 
-public class RefresherService extends Service {
+public class RefresherService extends Service implements AuthTask.AuthResultListener {
 
     private static final String TAG = RefresherService.class.getName();
+    public static final String EXTRA_REFRESH_INTERVAL =
+            "ru.minlexx.xnovaalarm.INTENT_EXTRA_REFRESH_INTERVAL";
 
+    // Notifications
     private final int NOTIFICATION_ID = R.string.local_service_started;
     private final int NOTIFICATION_ID_ALARM = R.string.attack_alarm;
     private NotificationManager mNM = null;
@@ -52,10 +62,17 @@ public class RefresherService extends Service {
     private boolean m_is_started = false;
 
     private IMainActivity m_mainActivity = null;
-    private MyCookieStore m_cookieStore = null;
 
+    // cookies
+    private static final String COOKIES_PREFS_FILENAME = "cookies";
+    private MyCookieStore m_cookieStore = null;
+    private CookieManager m_cookMgr = null;
+    boolean m_loginOk = false;
+
+    // timer and Overview refresher
     private Timer m_timer = null;
     private OverviewRefreshTask m_refreshTask = null;
+    private int m_refreshInterval = 15; // default - 15 minutes
     private long m_lastUpdateTime = 0;
 
     /**
@@ -78,6 +95,8 @@ public class RefresherService extends Service {
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         m_serviceNotification = this.createServiceNotification();
         m_timer = new Timer("OverviewRefreshTimer", false);
+        this.doInitializeCookies();
+        Log.d(TAG, "onCreate(): cookies manager init complete");
     }
 
     @Override
@@ -85,6 +104,12 @@ public class RefresherService extends Service {
         Log.d(TAG, "onDestroy()");
         stopForeground(true); // true = remove notification
         hideNotification();
+        // store cookies to SharedPreferences
+        SharedPreferences prefs = getSharedPreferences(COOKIES_PREFS_FILENAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor prefs_editor = prefs.edit();
+        m_cookieStore.storeCookiesTo(prefs_editor);
+        prefs_editor.apply();
+        //
         if (m_timer != null) m_timer.cancel();
         if (m_refreshTask != null) m_refreshTask.cancel();
         m_timer = null;
@@ -92,6 +117,8 @@ public class RefresherService extends Service {
         m_is_started = false;
         m_mainActivity = null;
         m_cookieStore = null;
+        m_cookMgr = null;
+        m_loginOk = false;
         m_serviceNotification = null;
     }
 
@@ -100,8 +127,16 @@ public class RefresherService extends Service {
         return mBinder;
     }
 
+    /**
+     * Starts the service and periodic overview refresher.
+     * Also marks self as foreground service
+     * @param intent ignored here
+     * @param flags ignored here
+     * @param startId also ignored here
+     * @return START_STICKY (this service is important, restart it)
+     */
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
         // care, intent may be null
         Log.i(TAG, "onStartCommand(): Received start id " + startId + ": " +
                 ((intent != null) ? intent.toString(): "No intent"));
@@ -116,37 +151,50 @@ public class RefresherService extends Service {
         // already shown in onCreate()
         if (this.m_mainActivity != null)
             this.m_mainActivity.notifyServiceStateChange();
+        // get param
+        if (intent != null) {
+            m_refreshInterval = intent.getIntExtra(EXTRA_REFRESH_INTERVAL, 15);
+        }
         //
         // use timer instead, test
-        Log.d(TAG, "Will run timer task after 500 ms...");
-        createTimer();
+        Log.d(TAG, String.format(Locale.getDefault(),
+                "Will run timer task after 500 ms, interval %d min...", m_refreshInterval));
+        // execute task every 10 minutes after a 0.5 sec delay
+        m_timer.schedule(new OverviewRefreshTask(), 500L, m_refreshInterval*60*1000L);
 
         return START_STICKY;
     }
 
+    protected void doInitializeCookies() {
+        m_cookieStore = new MyCookieStore();
+        m_cookMgr = new CookieManager(m_cookieStore, CookiePolicy.ACCEPT_ALL);
+        CookieHandler.setDefault(m_cookMgr);
+        // restore cookies from SharedPreferences
+        SharedPreferences prefs = getSharedPreferences(COOKIES_PREFS_FILENAME, Context.MODE_PRIVATE);
+        m_cookieStore.loadCookiesFrom(prefs);
+    }
 
     public boolean isStarted() { return m_is_started; }
 
+    public boolean isAuthorized() {
+        // either we just had a successful login attempt,
+        // or cookies were just loaded from persistent storage
+        return m_loginOk || m_cookieStore.doWeHaveAllLoginCookies();
+    }
 
     public void set_mainActivity(IMainActivity mainActivity) {
         this.m_mainActivity = mainActivity;
     }
 
-    public void set_cookieStore(MyCookieStore store) {
-        m_cookieStore = store;
-    }
-
-
     protected Notification createServiceNotification() {
         return this.createServiceNotification(null);
     }
 
-
     protected Notification createServiceNotification(CharSequence contentText) {
         // we will use the same text for the ticker and the expanded notification
         CharSequence text = getText(R.string.local_service_started);
-        // intent to launch MainActivity on notification click
-        Intent activityIntent = new Intent(this, MainActivity.class);
+        // intent to launch Main activity on notification click
+        Intent activityIntent = new Intent(this, Main.class);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         // The PendingIntent to launch our activity if the user selects this notification
@@ -168,7 +216,6 @@ public class RefresherService extends Service {
         return builder.build();
     }
 
-
     private synchronized void updateServiceNotification() {
         //long curTime = System.currentTimeMillis();
         //long secsPassed = (curTime - m_lastUpdateTime) / 1000;
@@ -185,7 +232,6 @@ public class RefresherService extends Service {
         //
         this.showNotification();
     }
-
 
     private void showNotification() {
         if (m_serviceNotification != null)
@@ -254,10 +300,44 @@ public class RefresherService extends Service {
         }
     }
 
-    private void createTimer() {
-        // execute task every 10 minutes after a 0.5 sec delay
-        m_timer.schedule(new OverviewRefreshTask(), 500L, 10*60*1000L);
+    ///////////////////////////////////////////////////////////////
+    // XNova login
+
+    public void beginXNovaLogin(String login, String password) {
+        AuthTask at = new AuthTask(this, login, password);
+        at.execute("");
     }
+
+    @Override
+    public void onXNovaLoginOK() {
+        m_loginOk = true; // we had a ssuccess ful login attempt
+        //
+        Log.i(TAG, "Login OK!");
+        //final CharSequence toastText = getResources().getText(R.string.login_ok, "Login OK!");
+        //Toast tst = Toast.makeText(this, toastText, Toast.LENGTH_SHORT);
+        Toast tst = Toast.makeText(this, R.string.login_ok, Toast.LENGTH_SHORT);
+        tst.show();
+        // notify activity
+        if (m_mainActivity != null)
+            m_mainActivity.notifyServiceStateChange();
+    }
+
+    @Override
+    public void onXNovaLoginFail(String errorStr) {
+        m_loginOk = false; // login failed!
+        //
+        if ((errorStr != null) && (errorStr.length() > 0)) {
+            Log.e(TAG, "Login error: " + errorStr);
+            Toast tst = Toast.makeText(this, errorStr, Toast.LENGTH_SHORT);
+            tst.show();
+        }
+        // notify activity
+        if (m_mainActivity != null)
+            m_mainActivity.notifyServiceStateChange();
+    }
+
+    //////////////////////////////////////////////////////////
+    // Overview reresher
 
     public class OverviewRefreshTask extends TimerTask {
 
