@@ -126,18 +126,27 @@ public class ConfigureFragment extends Fragment {
 
     public void onSwitchChanged(View view, boolean isChecked) {
         if (m_mainActivity == null) return;
-        Activity act = getActivity();
-        Intent intent = new Intent(act, RefresherService.class);
         if (isChecked) {
             int refresh_interval = Integer.valueOf(et_refreshinterval.getText().toString());
             Log.i(TAG, String.format(Locale.getDefault(),
                     "onSwitchChanged(): will call startService() with interval of %d minutes",
                     refresh_interval));
+            Activity act = getActivity();
+            Intent intent = new Intent(act, RefresherService.class);
             intent.putExtra(RefresherService.EXTRA_REFRESH_INTERVAL, refresh_interval);
             act.startService(intent);
         } else {
-            Log.i(TAG, "onSwitchChanged(): will call stopService()");
-            act.stopService(intent);
+            //Log.i(TAG, "onSwitchChanged(): will call stopService()");
+            //act.stopService(intent);
+            RefresherService rsrv = m_mainActivity.getRefresherService();
+            if (rsrv != null) {
+                Log.d(TAG, "onSwitchChanged(): will call RefresherService.please_stopSelf()");
+                // this will stop overview refresher, remove notification icon
+                // and stop service at once
+                rsrv.please_stopSelf();
+            } else {
+                Log.e(TAG, "m_mainActivity.getRefresherService() == null! This should not happen!");
+            }
         }
     }
 

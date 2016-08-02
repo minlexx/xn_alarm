@@ -102,16 +102,9 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy()");
-        stopForeground(true); // true = remove notification
-        hideNotification();
-        // store cookies to SharedPreferences
-        SharedPreferences prefs = getSharedPreferences(COOKIES_PREFS_FILENAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor prefs_editor = prefs.edit();
-        m_cookieStore.storeCookiesTo(prefs_editor);
-        prefs_editor.apply();
         //
-        if (m_timer != null) m_timer.cancel();
-        if (m_refreshTask != null) m_refreshTask.cancel();
+        onDestroy_handler();
+        //
         m_timer = null;
         m_refreshTask = null;
         m_is_started = false;
@@ -120,6 +113,25 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         m_cookMgr = null;
         m_loginOk = false;
         m_serviceNotification = null;
+    }
+
+    protected void onDestroy_handler() {
+        stopForeground(true); // true = remove notification
+        hideNotification();
+        // store cookies to SharedPreferences
+        SharedPreferences prefs = getSharedPreferences(COOKIES_PREFS_FILENAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor prefs_editor = prefs.edit();
+        m_cookieStore.storeCookiesTo(prefs_editor);
+        prefs_editor.apply();
+        Log.d(TAG, "onDestroy_handler(): stored cookies");
+        //
+        if (m_timer != null) m_timer.cancel();
+        if (m_refreshTask != null) m_refreshTask.cancel();
+    }
+
+    public void please_stopSelf() {
+        stopSelf();
+        onDestroy_handler();
     }
 
     @Override
