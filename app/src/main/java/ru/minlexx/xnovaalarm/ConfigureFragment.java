@@ -100,7 +100,9 @@ public class ConfigureFragment extends Fragment {
         if (savedInstanceState == null) return;
         Log.d(TAG, "doRestoreInstanceState()");
         //
+        switch_handle = false;
         sw_alarm_enabled.setChecked(savedInstanceState.getBoolean("sw_alarm_enabled"));
+        switch_handle = true;
         et_refreshinterval.setText(savedInstanceState.getString("et_refreshinterval"));
     }
 
