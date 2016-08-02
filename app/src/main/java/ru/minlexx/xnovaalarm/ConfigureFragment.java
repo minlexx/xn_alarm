@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -25,10 +26,12 @@ public class ConfigureFragment extends Fragment {
     private static final String TAG = ConfigureFragment.class.getName();
     private static final String PREFS_CONFIG_FILENAME = "config";
     private static final String PREFS_REFRESH_INTERVAL = "refresh_interval";
+    private static final String PREFS_VIBRATE_ON_NEW_MESSAGES = "vibrate_on_new_messages";
 
     // GUI controls
     private EditText et_refreshinterval = null;
     private Switch sw_alarm_enabled = null;
+    private CheckBox cb_vibrate_on_new_messages = null;
     private boolean switch_handle = true;
 
     IMainActivity m_mainActivity = null;
@@ -70,9 +73,12 @@ public class ConfigureFragment extends Fragment {
         // get GUI controls
         et_refreshinterval = (EditText)fragmentView.findViewById(R.id.et_refreshinterval);
         sw_alarm_enabled = (Switch)fragmentView.findViewById(R.id.sw_alarm_enabled);
+        cb_vibrate_on_new_messages = (CheckBox)fragmentView.findViewById(
+                R.id.cb_vibrate_on_new_messages);
         //
         assert(et_refreshinterval != null);
         assert(sw_alarm_enabled != null);
+        assert(cb_vibrate_on_new_messages != null);
         //
         this.doRestoreInstanceState(savedInstanceState);
         //
@@ -94,6 +100,8 @@ public class ConfigureFragment extends Fragment {
         //
         outState.putBoolean("sw_alarm_enabled", sw_alarm_enabled.isChecked());
         outState.putString("et_refreshinterval", et_refreshinterval.getText().toString());
+        outState.putBoolean("cb_vibrate_on_new_messages",
+                cb_vibrate_on_new_messages.isChecked());
     }
 
     protected void doRestoreInstanceState(@Nullable Bundle savedInstanceState) {
@@ -104,6 +112,8 @@ public class ConfigureFragment extends Fragment {
         sw_alarm_enabled.setChecked(savedInstanceState.getBoolean("sw_alarm_enabled"));
         switch_handle = true;
         et_refreshinterval.setText(savedInstanceState.getString("et_refreshinterval"));
+        cb_vibrate_on_new_messages.setChecked(
+                savedInstanceState.getBoolean("cb_vibrate_on_new_messages"));
     }
 
     @Override
@@ -113,6 +123,8 @@ public class ConfigureFragment extends Fragment {
                 PREFS_CONFIG_FILENAME, Context.MODE_PRIVATE);
         String refresh_interval = prefs.getString(PREFS_REFRESH_INTERVAL, "15");
         et_refreshinterval.setText(refresh_interval);
+        cb_vibrate_on_new_messages.setChecked(prefs.getBoolean(
+                PREFS_VIBRATE_ON_NEW_MESSAGES, true));
         Log.d(TAG, "onStart(): loaded savedata");
     }
 
@@ -124,6 +136,8 @@ public class ConfigureFragment extends Fragment {
                 PREFS_CONFIG_FILENAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor prefs_editor = prefs.edit();
         prefs_editor.putString(PREFS_REFRESH_INTERVAL, et_refreshinterval.getText().toString());
+        prefs_editor.putBoolean(PREFS_VIBRATE_ON_NEW_MESSAGES,
+                cb_vibrate_on_new_messages.isChecked());
         prefs_editor.apply();
         Log.d(TAG, "onStop(): saved savedata");
     }
@@ -139,6 +153,8 @@ public class ConfigureFragment extends Fragment {
             Activity act = getActivity();
             Intent intent = new Intent(act, RefresherService.class);
             intent.putExtra(RefresherService.EXTRA_REFRESH_INTERVAL, refresh_interval);
+            intent.putExtra(RefresherService.EXTRA_VIBRATE_ON_NEW_MESSAGES,
+                    cb_vibrate_on_new_messages.isChecked());
             act.startService(intent);
         } else {
             //Log.i(TAG, "onSwitchChanged(): will call stopService()");

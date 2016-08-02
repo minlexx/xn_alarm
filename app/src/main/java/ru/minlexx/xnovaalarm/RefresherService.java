@@ -51,6 +51,8 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
     private static final String TAG = RefresherService.class.getName();
     public static final String EXTRA_REFRESH_INTERVAL =
             "ru.minlexx.xnovaalarm.INTENT_EXTRA_REFRESH_INTERVAL";
+    public static final String EXTRA_VIBRATE_ON_NEW_MESSAGES =
+            "ru.minlexx.xnovaalarm.INTENT_EXTRA_VIBRATE_ON_NEW_MESSAGES";
 
     // Notifications
     private final int NOTIFICATION_ID = R.string.local_service_started;
@@ -74,6 +76,7 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
     private OverviewRefreshTask m_refreshTask = null;
     private int m_refreshInterval = 15; // default - 15 minutes
     private long m_lastUpdateTime = 0;
+    private boolean m_vibrateOnNewMsgs = true;
 
     /**
      * Class for clients to access.  Because we know this service always
@@ -166,6 +169,7 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         // get param
         if (intent != null) {
             m_refreshInterval = intent.getIntExtra(EXTRA_REFRESH_INTERVAL, 15);
+            m_vibrateOnNewMsgs = intent.getBooleanExtra(EXTRA_VIBRATE_ON_NEW_MESSAGES, true);
         }
         //
         // use timer instead, test
@@ -250,6 +254,11 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
             mNM.notify(NOTIFICATION_ID, m_serviceNotification);
     }
 
+    /**
+     * Display notification about incoming attack or new messages
+     * @param flight - closest incoming enemy flight
+     * @param new_messages - new messages count
+     */
     protected void showNotification_AM(XNFlight flight, int new_messages) {
         Log.i(TAG, String.format(Locale.getDefault(),
                 "showNotification_AM(flight=\"%s\", new_msgs=%d)",
@@ -257,13 +266,32 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         //
         CharSequence text = getText(R.string.attack_alarm);
         CharSequence title = getText(R.string.xnova_alarm);
-        String flights_line = null;
-        String messages_line = null;
+        // for multi-line notification
+        String flights_line = null; // 1st line
+        String messages_line = null; // 2nd line
+        // for single-line notification
         StringBuilder contents = new StringBuilder();
         if (flight != null) {
-            flights_line = String.format(Locale.getDefault(),
-                    getText(R.string.seconds_to_attack).toString(),  // "%d sec to attack",
-                    flight.timeLeft);
+            flights_line = ""; // not null!
+            int secs = flight.timeLeft;
+            int hrs = secs / 3600;
+            secs -= hrs / 3600;
+            int mins = secs / 60;
+            secs -= mins * 60;
+            //
+            if (hrs > 0) {
+                flights_line += String.valueOf(hrs);
+                flights_line += getText(R.string.hrs);
+                flights_line += " ";
+            }
+            if (mins > 0) {
+                flights_line += String.valueOf(mins);
+                flights_line += getText(R.string.mins);
+                flights_line += " ";
+            }
+            flights_line += String.valueOf(secs);
+            flights_line += " ";
+            flights_line += getText(R.string.till_attack).toString();  // till attack",
             contents.append(flights_line);
         }
         if (new_messages > 0) {
@@ -290,7 +318,12 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         builder.setContentText(contents.toString()); // contents of the entry
         builder.setOngoing(false);
         builder.setLights(Color.BLUE, 500, 500);
-        builder.setVibrate(vibPattern);
+        // Vibrate ONLY if:
+        //   1) either there is an enemy attack
+        //   2) or there are new messages and we are allowed to vibrate in settings
+        if ((flight != null) ||
+                ((new_messages > 0)  &&  m_vibrateOnNewMsgs))
+            builder.setVibrate(vibPattern);
         builder.setStyle(nstyle);
         // set notification sound only if there is an attacking flight
         if (flight != null) {

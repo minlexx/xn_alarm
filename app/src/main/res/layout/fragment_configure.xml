@@ -46,4 +46,16 @@
             android:id="@+id/et_refreshinterval"
             android:text="15"/>
     </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/vibrate_on_new_messages"
+            android:id="@+id/cb_vibrate_on_new_messages"/>
+    </LinearLayout>
 </LinearLayout>

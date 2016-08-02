@@ -16,6 +16,10 @@
     <string name="xnova_password">XNova пароль:</string>
     <string name="alarm_enabled">Будильник включен</string>
     <string name="refresh_timeout_mins">Интервал обновления, минут:</string>
-    <string name="seconds_to_attack">%d сек до атаки</string>
-    <string name="new_messages">%d новых сообщений</string>
+    <string name="new_messages">%d нов. сообщ.</string>
+    <string name="hrs">ч</string>
+    <string name="mins">м</string>
+    <string name="secs">с</string>
+    <string name="till_attack">до атаки</string>
+    <string name="vibrate_on_new_messages">Вибрация при сообщениях</string>
 </resources>
