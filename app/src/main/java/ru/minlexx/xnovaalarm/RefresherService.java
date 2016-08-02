@@ -110,7 +110,6 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         //
         m_timer = null;
         m_refreshTask = null;
-        m_is_started = false;
         m_mainActivity = null;
         m_cookieStore = null;
         m_cookMgr = null;
@@ -130,11 +129,15 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         //
         if (m_timer != null) m_timer.cancel();
         if (m_refreshTask != null) m_refreshTask.cancel();
+        //
+        m_is_started = false; // mark self as stopped
     }
 
     public void please_stopSelf() {
         stopSelf();
         onDestroy_handler();
+        if (m_mainActivity != null)
+            m_mainActivity.notifyServiceStateChange();
     }
 
     @Override
