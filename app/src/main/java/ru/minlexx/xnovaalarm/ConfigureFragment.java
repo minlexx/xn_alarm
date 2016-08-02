@@ -29,6 +29,7 @@ public class ConfigureFragment extends Fragment {
     // GUI controls
     private EditText et_refreshinterval = null;
     private Switch sw_alarm_enabled = null;
+    private boolean switch_handle = true;
 
     IMainActivity m_mainActivity = null;
 
@@ -81,6 +82,7 @@ public class ConfigureFragment extends Fragment {
                 onSwitchChanged(buttonView, isChecked);
             }
         });
+        switch_handle = true;
         //
         return fragmentView;
     }
@@ -126,6 +128,7 @@ public class ConfigureFragment extends Fragment {
 
     public void onSwitchChanged(View view, boolean isChecked) {
         if (m_mainActivity == null) return;
+        if (!switch_handle) return; // handler disabled
         if (isChecked) {
             int refresh_interval = Integer.valueOf(et_refreshinterval.getText().toString());
             Log.i(TAG, String.format(Locale.getDefault(),
@@ -160,6 +163,7 @@ public class ConfigureFragment extends Fragment {
             sw_alarm_enabled.setEnabled(true);
         }
         // service started/stopped affects config controls
+        switch_handle = false; // disable onCheckedChange() handler
         if (isStarted) {
             et_refreshinterval.setEnabled(false);
             sw_alarm_enabled.setChecked(true);
@@ -167,5 +171,6 @@ public class ConfigureFragment extends Fragment {
             et_refreshinterval.setEnabled(true);
             sw_alarm_enabled.setChecked(false);
         }
+        switch_handle = true; // enable switch handler again
     }
 }
