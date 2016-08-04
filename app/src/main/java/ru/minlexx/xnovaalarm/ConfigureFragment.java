@@ -183,11 +183,13 @@ public class ConfigureFragment extends Fragment {
         // service started/stopped affects config controls
         switch_handle = false; // disable onCheckedChange() handler
         if (isStarted) {
-            et_refreshinterval.setEnabled(false);
             sw_alarm_enabled.setChecked(true);
+            et_refreshinterval.setEnabled(false);
+            cb_vibrate_on_new_messages.setEnabled(false);
         } else {
-            et_refreshinterval.setEnabled(true);
             sw_alarm_enabled.setChecked(false);
+            et_refreshinterval.setEnabled(true);
+            cb_vibrate_on_new_messages.setEnabled(true);
         }
         switch_handle = true; // enable switch handler again
     }
