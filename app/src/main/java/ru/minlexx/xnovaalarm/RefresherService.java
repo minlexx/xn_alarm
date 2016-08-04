@@ -97,7 +97,6 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         Log.d(TAG, "onCreate()");
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         m_serviceNotification = this.createServiceNotification();
-        m_timer = new Timer("OverviewRefreshTimer", false);
         this.doInitializeCookies();
         Log.d(TAG, "onCreate(): cookies manager init complete");
     }
@@ -108,8 +107,6 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         //
         onDestroy_handler();
         //
-        m_timer = null;
-        m_refreshTask = null;
         m_mainActivity = null;
         m_cookieStore = null;
         m_cookMgr = null;
@@ -120,6 +117,7 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
     protected void onDestroy_handler() {
         stopForeground(true); // true = remove notification
         hideNotification();
+        hideNotification_AM();
         // store cookies to SharedPreferences
         SharedPreferences prefs = getSharedPreferences(COOKIES_PREFS_FILENAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor prefs_editor = prefs.edit();
@@ -127,8 +125,17 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
         prefs_editor.apply();
         Log.d(TAG, "onDestroy_handler(): stored cookies");
         //
-        if (m_timer != null) m_timer.cancel();
-        if (m_refreshTask != null) m_refreshTask.cancel();
+        // this is where real actions are stopped
+        if (m_refreshTask != null) {
+            m_refreshTask.cancel();
+            m_refreshTask = null;
+            Log.d(TAG, "onDestroy_handler(): stopped refresh task");
+        }
+        if (m_timer != null) {
+            m_timer.cancel();
+            m_timer = null;
+            Log.d(TAG, "onDestroy_handler(): stopped timer");
+        }
         //
         m_is_started = false; // mark self as stopped
     }
@@ -175,11 +182,17 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
             m_vibrateOnNewMsgs = intent.getBooleanExtra(EXTRA_VIBRATE_ON_NEW_MESSAGES, true);
         }
         //
-        // use timer instead, test
+        // use timer
         Log.d(TAG, String.format(Locale.getDefault(),
                 "Will run timer task after 500 ms, interval %d min...", m_refreshInterval));
+        if (m_timer == null) {
+            m_timer = new Timer("OverviewRefreshTimer", false);
+        }
+        if (m_refreshTask == null) {
+            m_refreshTask = new OverviewRefreshTask();
+        }
         // execute task every 10 minutes after a 0.5 sec delay
-        m_timer.schedule(new OverviewRefreshTask(), 500L, m_refreshInterval*60*1000L);
+        m_timer.schedule(m_refreshTask, 500L, m_refreshInterval*60*1000L);
 
         return START_STICKY;
     }
