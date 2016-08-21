@@ -306,8 +306,9 @@ public class RefresherService extends Service implements AuthTask.AuthResultList
                 flights_line += " ";
             }
             flights_line += String.valueOf(secs);
+            flights_line += getText(R.string.secs);
             flights_line += " ";
-            flights_line += getText(R.string.till_attack).toString();  // till attack",
+            flights_line += getText(R.string.till_attack).toString();
             contents.append(flights_line);
         }
         if (new_messages > 0) {
